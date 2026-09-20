@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wynncard"
+version = "0.1.0"
+description = "Wynncraft item cards as PNG, in the shape of the in-game tooltip."
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["pillow>=10.4"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["wynncard"]
