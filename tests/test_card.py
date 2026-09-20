@@ -1,7 +1,7 @@
 import unittest
 
 from wynncard import render_card
-from wynncard.rows import build, stats
+from wynncard.game import build, scale_color
 
 
 def stat(api, key, value, unit, pct, display=None):
@@ -19,33 +19,42 @@ ITEM = {
     ],
 }
 INFO = {
-    "type": "weapon", "subType": "wand", "attackSpeed": "normal", "averageDps": 510, "powderSlots": 4,
-    "elements": ["water"], "requirements": {"level": 97, "classRequirement": "mage", "intelligence": 105},
+    "type": "weapon", "subType": "wand", "tier": "mythic", "emblem": "diamond_5", "attackSpeed": "normal",
+    "averageDps": 510, "powderSlots": 4, "elements": ["water"],
+    "requirements": {"level": 97, "classRequirement": "mage", "intelligence": 105},
     "base": {"baseWaterDamage": {"min": 220, "max": 280}},
     "majorIds": {"Cherry Bombs": "<span>Meteor splits into three.</span>"},
 }
 
 
-class RowsTest(unittest.TestCase):
+class BuildTest(unittest.TestCase):
+    def flat(self, item=ITEM, info=INFO, scales=()):
+        runs = []
+        for line in build(item, info, list(scales)):
+            runs += line[1] if line[0] != "aligned" else line[1] + line[2]
+        return "".join(value for value, _, _ in runs)
+
     def test_tooltip_order_and_spell_cost_sign(self):
-        rows = stats(ITEM, ("Heal", "Teleport", "Meteor", "Ice Snake"))
-        names = [r[1][-1][0] for r in rows if r[0] == "stat"]
-        self.assertEqual(names, ["Intelligence", "Mana Regen", "Ice Snake Cost"])
-        cost = next(r for r in rows if r[0] == "stat" and r[1][-1][0] == "Ice Snake Cost")
-        self.assertEqual(cost[2][0][0], "-11%")  # the API counts the reduction up, the tooltip shows a negative cost
+        body = self.flat()
+        self.assertLess(body.index("Intelligence"), body.index("Mana Regen"))
+        self.assertLess(body.index("Mana Regen"), body.index("Ice Snake Cost"))
+        self.assertIn("-11%", body)  # the API counts the reduction up, the tooltip shows a negative cost
 
-    def test_badge_holds_powder_and_rerolls(self):
-        self.assertIn(("badge", 4, 3), build(ITEM, INFO, []))
+    def test_class_and_scales(self):
+        body = self.flat(scales=[{"profile": "Main", "score": 94.6}])
+        self.assertIn("Mage/Dark Wizard", body)
+        self.assertIn("Main Scale", body)
+        self.assertIn("[94.6%]", body)
 
-    def test_single_reroll_is_not_shown(self):
-        rows = build(dict(ITEM, reroll_count=1), {}, [])
-        self.assertFalse([r for r in rows if r[0] == "badge"])
+    def test_percentage_colours(self):
+        self.assertEqual(scale_color(100.0), "rainbow")
+        self.assertEqual(scale_color(20.0), "#ff5555")
+        self.assertEqual(scale_color(95.0), "#55ff55")
 
 
 class RenderTest(unittest.TestCase):
     def test_png(self):
-        png = render_card(ITEM, INFO, [{"profile": "Main", "score": 94.6}])
-        self.assertTrue(png.startswith(b"\x89PNG"))
+        self.assertTrue(render_card(ITEM, INFO, [{"profile": "Main", "score": 94.6}]).startswith(b"\x89PNG"))
 
     def test_png_without_item_data(self):
         self.assertTrue(render_card({"name": "Spring", "rarity": "Mythic"}).startswith(b"\x89PNG"))

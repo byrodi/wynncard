@@ -1,0 +1,1 @@
+{"providers": [{"id": "space", "type": "reference"}, {"advances": {" ": 4, "\u200c": 0}, "type": "space"}, {"ascent": -4096, "chars": ["\uf000"], "file": "font/banner/filler.png", "height": 1, "type": "bitmap"}, {"ascent": 7, "chars": ["\ue000\u0000\u0000", "\ue001\u0000\u0000", "\ue060\ue061\ue062"], "file": "font/banner/symbol.png", "type": "bitmap"}]}

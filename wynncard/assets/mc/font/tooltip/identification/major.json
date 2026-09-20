@@ -1,0 +1,1 @@
+{"providers": [{"id": "space", "type": "reference"}, {"advances": {" ": 4, "\u200c": 0}, "type": "space"}, {"ascent": 6, "chars": ["\ue000"], "file": "font/tooltip/identification/major.png", "type": "bitmap"}]}
