@@ -1,0 +1,51 @@
+name: Bug report
+description: Something does not work as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search [existing issues](https://github.com/byrodi/wynncard/issues?q=is%3Aissue) first. Security problems go to a [private report](https://github.com/byrodi/wynncard/security/advisories/new), not here.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `pip show wynncard` or the release you use.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Python and Pillow versions, OS.
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: Minimal code sample
+      description: The `Item` or API JSON and the `render` call that show the problem.
+      render: python
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Traceback or output. It is formatted as code automatically.
+      render: shell

@@ -5,10 +5,16 @@ build-backend = "hatchling.build"
 [project]
 name = "wynncard"
 version = "0.2.0"
-description = "Wynncraft item cards as PNG, in the shape of the in-game tooltip."
+description = "Wynncraft item tooltips rendered as PNG cards with the game's own fonts and sprites"
+readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+keywords = ["wynncraft", "minecraft", "tooltip", "png", "pillow"]
 dependencies = ["pillow>=10.4"]
+
+[project.urls]
+Repository = "https://github.com/byrodi/wynncard"
+Changelog = "https://github.com/byrodi/wynncard/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["wynncard"]

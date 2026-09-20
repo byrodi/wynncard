@@ -1,7 +1,33 @@
 # wynncard
 
-Renders a Wynncraft item as a PNG of its in-game tooltip: the same fonts, sprites, frames and layout
-the game and the Wynntils mod draw, scaled up so it looks like a screenshot.
+[![CI](https://github.com/byrodi/wynncard/actions/workflows/ci.yml/badge.svg)](https://github.com/byrodi/wynncard/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/byrodi/wynncard)](https://github.com/byrodi/wynncard/releases)
+[![License](https://img.shields.io/github/license/byrodi/wynncard)](LICENSE)
+
+Wynncraft item tooltips rendered as PNG cards with the game's own fonts and sprites.
+
+The card is the tooltip the game and the Wynntils mod draw, laid out in Minecraft pixels and scaled up,
+so it looks like a screenshot of the real item.
+
+## Features
+
+- Describe any item by hand with `Item`, or load one from the Wynnpool and Wynnventory APIs.
+- Every gear identification known by API name, with the mod's names, units and order.
+- Roll percentages coloured like the mod, flat or lerped, or hidden for the plain game look.
+- Rarity frames, shiny frames, emblems, element strips, requirement diamonds, major ids.
+- Output as PNG bytes or a Pillow image at any integer scale.
+
+## Requirements
+
+Python 3.11 or newer and Pillow.
+
+## Installation
+
+```
+pip install git+https://github.com/byrodi/wynncard
+```
+
+## Example
 
 ```python
 from wynncard import Item, Identification, Requirements, render
@@ -15,12 +41,13 @@ item = Item("Spring", tier="mythic", kind="weapon", type="bow", emblem="diamond_
 open("spring.png", "wb").write(render(item, scale=4))
 ```
 
-Every `Item` field but the name is optional; a section with no data is not drawn. `Identification.from_api`
-knows every gear stat by its Wynncraft API name or Wynntils key and fills the printed name, the unit,
-the position in the list and the "lower is better" flag of spell costs. Stats it does not know print as
-given and sort last.
+This writes a mythic bow card with its DPS, damage, requirements and two rolled identifications.
 
-## From the APIs
+Every `Item` field but the name is optional; a section with no data is not drawn. `Identification.from_api`
+takes a Wynncraft API stat name (`manaRegen`) or a Wynntils key (`MISC_MANA_REGEN`); unknown names print
+as given and sort last.
+
+### From the APIs
 
 ```python
 from wynncard import from_wynnpool, from_market, render
@@ -30,50 +57,32 @@ item = from_market(listing, item_data, scales)                                  
 png = render(item)
 ```
 
-- `from_wynnpool(info)` takes the Wynnpool item (same shape as the Wynncraft v3 item API) with its
-  unrolled `raw` identifications.
-- `from_market(listing, info=None, scales=None)` takes a Wynnventory Trade Market listing (`name`,
-  `rarity`, `overall_roll`, `reroll_count`, `stat_rolls`, `shiny_stat`) and lays its rolls over the
-  Wynnpool item. `scales` are Wynnpool weight scales, `[{"profile": "Main", "score": 94.6}]`.
+`from_wynnpool` takes the Wynnpool item (same shape as the Wynncraft v3 item API) with its unrolled
+identifications. `from_market` lays a Wynnventory Trade Market listing over it: rolls, overall
+percentage, rerolls and shiny stat. `scales` are Wynnpool weight scales, `[{"profile": "Main", "score": 94.6}]`.
 
-## Render options
+### Render options
 
 `render(item, **options)` returns PNG bytes, `render_image` the Pillow image.
 
-- `scale` - output pixels per Minecraft pixel; 4 by default, 1 gives the raw game size.
-- `color_lerp` - `False` snaps roll colours to the five flat stops, `True` slides between them like the
-  mod's lerp option.
-- `rolls` - `False` hides the roll percentages, giving the plain game tooltip.
-- `frame` - `False` leaves the text on a transparent canvas.
-- `min_width` - the narrowest text block in Minecraft pixels; 140 like the game.
-
-Layout follows Wynntils' `IdentifiableTooltipBuilder`: emblem and name, rarity/type banners with the
-untradable or quest-item mark, element strip, DPS or health with attack speed and base damage or
-defence, the Wynnpool scales, requirement diamonds with quest, class and level, the shiny stat, the
-reroll counter, identifications in the mod's default order (skills, misc, defence, damage, spell costs)
-with value and roll, and the major ids. Shiny items get the shiny frame. Requirement marks are drawn
-neutral, because a card describes an item, not whether a particular character can wear it.
-
-Python 3.11+, Pillow the only dependency. Tests: `python -m unittest discover -s tests`.
-
-## Layout of the package
-
-- `model.py` - `Item` and its parts, the input to everything else.
-- `stats.py` - the identification table, built the way Wynntils builds its stat registry.
-- `sources.py` - adapters from the Wynnpool and Wynnventory JSON.
-- `tooltip.py` - `Item` to tooltip lines: runs of `(text, font, colour)` in Minecraft pixels.
-- `mcfont.py` - Minecraft bitmap fonts: bitmap and space providers, glyph metrics, drawing.
-- `render.py` - lines onto the nine-slice frame, scaled up, to PNG.
+- `scale`: output pixels per Minecraft pixel, 4 by default.
+- `color_lerp`: slide roll colours between the stops instead of snapping to the flat five.
+- `rolls`: `False` hides the roll percentages.
+- `frame`: `False` leaves the text on a transparent canvas.
+- `min_width`: the narrowest text block in Minecraft pixels, 140 like the game.
 
 ## Assets
 
-`wynncard/assets/mc` holds the fonts, sprites and tooltip frames taken from the Wynncraft resource
-pack, plus the scales icon from Wynntils. They belong to Wynncraft and to the Wynntils project, not to
-this repository, so keep it private. `mcfont.py` implements the part of Minecraft's font stack they
-need: bitmap providers, the space font for kerning, and `round(inked width * scale) + 1` advances.
+`wynncard/assets/mc` holds the fonts, sprites and tooltip frames from the Wynncraft resource pack and the
+scales icon from Wynntils. The package ships them; `WYNNCARD_ASSETS` points the library at a copy kept
+elsewhere. To refresh them from a newer pack, run `python tools/extract_assets.py [pack.zip | downloads dir]`;
+without an argument it takes the newest pack the launcher downloaded from the server on macOS, Windows
+or Linux.
 
-The package ships them, so installing it is enough; `WYNNCARD_ASSETS` points the library at a copy kept
-elsewhere. To refresh them from a newer pack, run `python tools/extract_assets.py [pack.zip | downloads
-dir]`; without an argument it takes the newest pack the launcher downloaded from the server (macOS,
-Windows and Linux locations are known). The pack's zip headers are obfuscated and its PNG checksums are
-deliberately broken, so the extractor reads entries by offset and rebuilds each image.
+## License
+
+The code is under the [MIT License](LICENSE).
+
+The files under `wynncard/assets` are not: the fonts, sprites and frames belong to Wynncraft Studios and
+the scales icon to the Wynntils project. They are included so the cards match the game and are used here
+without a written grant from either owner. Do not reuse them outside this purpose.
