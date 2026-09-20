@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A tooltip no longer draws the divider of a section it has no data for, so a market listing
+  rendered without the Wynnpool item has no empty lines above its identifications.
+
 ## [0.2.0] - 2026-09-20
 
 ### Added

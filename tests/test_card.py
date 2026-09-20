@@ -84,6 +84,15 @@ class BuildTest(unittest.TestCase):
         self.assertIn("-10%", body)
         self.assertLess(body.index("Walk Speed"), body.index("Custom Stat"))  # unknown keys go last
 
+    def test_a_listing_without_base_data_draws_no_empty_dividers(self):
+        """A market lot with no Wynnpool item has no damage and no requirements to separate."""
+        def dividers(item):
+            return sum(1 for line in build(item) if line.runs and line.runs[0][1] == "tooltip/divider")
+
+        self.assertEqual(0, dividers(from_market(LISTING)))
+        self.assertEqual(2, dividers(from_market(LISTING, INFO)))
+        self.assertEqual(3, dividers(from_market(LISTING, INFO, [{"profile": "Main", "score": 94.6}])))
+
     def test_flat_colours_snap_to_the_stop_above(self):
         self.assertEqual(scale_color(100.0), "rainbow")
         self.assertEqual(scale_color(19.9), "#ff5555")

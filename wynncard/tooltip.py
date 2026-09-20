@@ -311,16 +311,14 @@ def build(item: Item, rolls: bool = True, lerp: bool = False) -> list[Line]:
     colour scale for them.
     """
     tier = tier_of(item)
-    lines = [left([]), _name(item, tier, rolls, lerp)] + _tags(item, tier) + [left([])]
-    lines += _overview(item, tier)
-    weights = _weights(item, lerp)
-    if weights:
-        lines += [_divider(tier)] + weights
-    lines.append(_divider(tier))
-    lines += _requirements(item, tier)
-    lines += _shiny(item, tier)
-    lines.append(_divider(tier))
-    lines += _reroll(item, tier)
-    lines += _stats(item, rolls, lerp)
-    lines += _major_ids(item, tier)
+    header = [left([]), _name(item, tier, rolls, lerp)] + _tags(item, tier) + [left([])]
+    sections = [_overview(item, tier),
+                _weights(item, lerp),
+                _requirements(item, tier) + _shiny(item, tier),
+                _reroll(item, tier) + _stats(item, rolls, lerp) + _major_ids(item, tier)]
+    lines = list(header)
+    for section in filter(None, sections):
+        if len(lines) > len(header):
+            lines.append(_divider(tier))  # a divider separates two sections, so an empty one draws none
+        lines += section
     return lines
