@@ -16,6 +16,8 @@ png = render_card(listing, item_data, scales)
   average DPS, elements, requirements, base damage and major ids.
 - `scales` - `[{"profile": "Main", "score": 94.6}]`, Wynnpool weight scales scored against the roll.
 - `scale` - how many times to blow the tooltip up; 4 by default, 1 gives raw Minecraft pixels.
+- `color_lerp` - `True` (the default) slides roll percentages between the colour stops, `False` snaps
+  them to the five flat colours the mod uses with lerping turned off.
 
 Without `item_data` the card still renders, only with the sections the listing alone can fill.
 

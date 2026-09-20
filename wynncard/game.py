@@ -68,10 +68,17 @@ def space(pixels: int) -> tuple:
     return (offset(pixels), "space", None)
 
 
-def scale_color(percentage: float) -> str:
-    """The percentage colour, lerped between the stops of the mod's default scale."""
+def scale_color(percentage: float, lerp: bool = True) -> str:
+    """The percentage colour on the mod's default scale.
+
+    With `lerp` the colour slides between the stops; without it the stop above the value wins, which is
+    the flat five-colour look Wynntils shows when colour lerping is off.
+    """
     if percentage >= 100:
         return "rainbow"
+    if not lerp:
+        stop = next((rgb for edge, rgb in SCALE_COLORS if percentage < edge), SCALE_COLORS[-1][1])
+        return "#%02x%02x%02x" % stop
     if percentage <= SCALE_COLORS[0][0]:
         return "#%02x%02x%02x" % SCALE_COLORS[0][1]
     for (low, low_rgb), (high, high_rgb) in zip(SCALE_COLORS, SCALE_COLORS[1:]):
@@ -118,7 +125,7 @@ def banner(label: str, background: str, foreground: str = BLACK, suffix: tuple |
 
 # ---------------------------------------------------------------- sections
 
-def _name(item: dict, info: dict, tier: str) -> list:
+def _name(item: dict, info: dict, tier: str, lerp: bool) -> list:
     shape, _, variant = (info.get("emblem") or "diamond_1").partition("_")
     frame = chr(0xE000 + (int(variant or 1) - 1) * 0x10 + EMBLEM_SHAPES.index(shape))
     sprite = TYPE_SPRITES.get((info.get("subType") or "").lower(), "")
@@ -126,7 +133,7 @@ def _name(item: dict, info: dict, tier: str) -> list:
             space(5), text(item.get("name") or "?", TIERS[tier][0])]
     overall = item.get("overall_roll")
     if overall is not None:
-        runs.append(text(f" [{overall:.1f}%]", scale_color(overall)))
+        runs.append(text(f" [{overall:.1f}%]", scale_color(overall, lerp)))
     return runs
 
 
@@ -180,13 +187,13 @@ def _divider(tier: str) -> tuple:
     return centered([("", DIVIDER_FONT, TIERS[tier][1])])
 
 
-def _weights(scales: list[dict]) -> list:
+def _weights(scales: list[dict], lerp: bool) -> list:
     if not scales:
         return []
     lines = [fixed([("", ICON_FONT, ORANGE), text(" Wynnpool")])]
     for scale in scales:
         lines.append(aligned([text(f"{scale['profile']} Scale")],
-                             [text(f" [{scale['score']:.1f}%]", scale_color(scale["score"]))]))
+                             [text(f" [{scale['score']:.1f}%]", scale_color(scale["score"], lerp))]))
     return lines
 
 
@@ -239,7 +246,7 @@ def _reroll(item: dict, tier: str) -> list:
     return [aligned([], runs)]
 
 
-def _stats(item: dict, spells: tuple) -> list:
+def _stats(item: dict, spells: tuple, lerp: bool) -> list:
     found = []
     for roll in item.get("stat_rolls") or []:
         actual = roll.get("statActualValue") or {}
@@ -274,7 +281,7 @@ def _stats(item: dict, spells: tuple) -> list:
         positive = value < 0 if key.startswith("SPELL_") else value > 0
         right = [text(f"{value:+g}{unit}", GREEN if positive else RED)]
         if not math.isnan(percentage):
-            right.append(text(f" [{percentage:.1f}%]", scale_color(percentage)))
+            right.append(text(f" [{percentage:.1f}%]", scale_color(percentage, lerp)))
         lines.append(aligned(left, right))
     return lines
 
@@ -288,14 +295,14 @@ def _major_ids(info: dict, tier: str) -> list:
     return lines
 
 
-def build(item: dict, info: dict, scales: list[dict]) -> list:
+def build(item: dict, info: dict, scales: list[dict], color_lerp: bool = True) -> list:
     """Every tooltip line, in the order Wynntils assembles the sections."""
     tier = (item.get("rarity") or info.get("tier") or "normal").lower()
     if tier not in TIERS:
         tier = "normal"
-    lines = [fixed([]), fixed(_name(item, info, tier))] + _tags(item, info, tier) + [fixed([])]
+    lines = [fixed([]), fixed(_name(item, info, tier, color_lerp))] + _tags(item, info, tier) + [fixed([])]
     lines += _overview(info, tier)
-    weights = _weights(scales)
+    weights = _weights(scales, color_lerp)
     if weights:
         lines += [_divider(tier)] + weights
     lines.append(_divider(tier))
@@ -304,7 +311,7 @@ def build(item: dict, info: dict, scales: list[dict]) -> list:
     lines.append(_divider(tier))
     lines += _reroll(item, tier)
     req = info.get("requirements") or {}
-    lines += _stats(item, CLASSES.get(req.get("classRequirement") or "", ("", ()))[1])
+    lines += _stats(item, CLASSES.get(req.get("classRequirement") or "", ("", ()))[1], color_lerp)
     lines += _major_ids(info, tier)
     return lines
 

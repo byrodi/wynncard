@@ -47,7 +47,9 @@ def _nine_slice(name: str, width: int, height: int) -> Image.Image:
 
 
 def _run_width(runs) -> int:
-    return sum(mcfont.width(font_id, value) for value, font_id, _ in runs)
+    width = sum(mcfont.width(font_id, value) for value, font_id, _ in runs)
+    tail = next((mcfont.overhang(font_id, value) for value, font_id, _ in reversed(runs) if value), 0)
+    return width + tail
 
 
 def _draw_runs(canvas: Image.Image, x: int, baseline: int, runs, zoom: int) -> None:
@@ -60,6 +62,10 @@ def _draw_runs(canvas: Image.Image, x: int, baseline: int, runs, zoom: int) -> N
                 x = mcfont.draw(canvas, x, baseline, char, font_id, RAINBOW[index % len(RAINBOW)], zoom)
             continue
         x = mcfont.draw(canvas, x, baseline, value, font_id, color, zoom)
+
+
+def _line_width(line: tuple) -> int:
+    return _run_width(line[1] if line[0] != "aligned" else line[1] + line[2])
 
 
 def _wrapped(runs, width: int) -> list:
@@ -77,12 +83,17 @@ def _wrapped(runs, width: int) -> list:
     return lines + ([current] if current else [])
 
 
-def render(item: dict, info: dict | None = None, scales: list[dict] | None = None, scale: int = 4) -> bytes:
-    """PNG of the item tooltip; `scale` is the Minecraft GUI scale to render at."""
-    info = info or {}
-    lines = game.build(item, info, scales or [])
+def render(item: dict, info: dict | None = None, scales: list[dict] | None = None, scale: int = 4,
+           color_lerp: bool = True) -> bytes:
+    """PNG of the item tooltip.
 
-    width = max([MIN_WIDTH] + [game.line_width(line) for line in lines if line[0] != "wrap"])
+    `scale` is how many pixels one Minecraft pixel becomes; `color_lerp` slides roll percentages
+    between the colour stops instead of snapping them to the five flat colours.
+    """
+    info = info or {}
+    lines = game.build(item, info, scales or [], color_lerp)
+
+    width = max([MIN_WIDTH] + [_line_width(line) for line in lines if line[0] != "wrap"])
     flat = []
     for line in lines:
         if line[0] == "wrap":

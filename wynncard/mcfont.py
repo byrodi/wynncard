@@ -15,11 +15,13 @@ ASSETS = Path(__file__).parent / "assets" / "mc"
 
 
 class Glyph:
-    __slots__ = ("image", "advance", "ascent", "height", "colored", "_sized")
+    __slots__ = ("image", "advance", "ascent", "height", "colored", "overhang", "_sized")
 
     def __init__(self, image: Image.Image | None, advance: int, ascent: int, height: int):
         self.image, self.advance, self.ascent, self.height = image, advance, ascent, height
         self.colored = image is not None and _is_colored(image)
+        drawn = round(image.width * height / image.height) if image is not None else 0
+        self.overhang = max(0, drawn - advance)  # sprites wider than their advance, so lines leave room for them
         self._sized: dict[int, Image.Image] = {}
 
     def sized(self, zoom: int) -> Image.Image:
@@ -89,6 +91,13 @@ def width(font_id: str, text: str) -> int:
     return sum(g.advance for g in (chars.get(c) for c in text) if g is not None)
 
 
+def overhang(font_id: str, text: str) -> int:
+    """How far the last glyph sticks out past the pen position."""
+    chars = font(font_id)
+    found = next((chars.get(c) for c in reversed(text) if chars.get(c) is not None), None)
+    return found.overhang if found else 0
+
+
 def draw(canvas: Image.Image, x: int, baseline: int, text: str, font_id: str,
          color: str | tuple = "#ffffff", zoom: int = 1) -> int:
     """Draw text onto canvas at the pen position, `zoom` pixels per Minecraft pixel; returns the new pen x."""
@@ -102,7 +111,8 @@ def draw(canvas: Image.Image, x: int, baseline: int, text: str, font_id: str,
             sprite = found.sized(zoom)
             if tint[:3] != (255, 255, 255) and not found.colored:
                 sprite = _tinted(sprite, tint)
-            canvas.alpha_composite(sprite, (x * zoom, (baseline - found.ascent) * zoom))
+            bottom = (baseline - found.ascent + found.height) * zoom  # anchor the foot: whole-pixel scaling
+            canvas.alpha_composite(sprite, (x * zoom, bottom - sprite.height))  # can leave a glyph a pixel short
         x += found.advance
     return x
 

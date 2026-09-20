@@ -51,6 +51,11 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(scale_color(20.0), "#ff5555")
         self.assertEqual(scale_color(95.0), "#55ff55")
 
+    def test_flat_colours_snap_to_the_stop_above(self):
+        self.assertEqual(scale_color(60.0, lerp=False), "#ffff55")
+        self.assertEqual(scale_color(96.0, lerp=False), "#55ffff")
+        self.assertNotEqual(scale_color(60.0), scale_color(60.0, lerp=False))
+
 
 class RenderTest(unittest.TestCase):
     def test_png(self):
