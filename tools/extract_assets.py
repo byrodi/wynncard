@@ -1,16 +1,34 @@
 """Pull the fonts, sprites and tooltip frames wynncard needs out of a Wynncraft resource pack.
 
+    python tools/extract_assets.py [pack.zip | downloads directory]
+
+Without an argument the newest pack in Minecraft's server-resource-pack download folder is used
+(`~/Library/Application Support/minecraft/downloads` on macOS, `%APPDATA%/.minecraft/downloads` on
+Windows, `~/.minecraft/downloads` on Linux). The output goes to `wynncard/assets/mc`, which the library
+reads at runtime. This is a maintainer tool: users of the package never need to run it.
+
 The pack ships with obfuscated local file headers, so entries are read straight from the offsets
 in the central directory instead of through ZipFile.open.
 """
 import json
+import os
 import pathlib
 import struct
 import sys
 import zipfile
 import zlib
 
-PACK = pathlib.Path.home() / "Library/Application Support/minecraft/downloads"
+
+
+def downloads() -> pathlib.Path:
+    """Where the launcher keeps packs sent by servers on this OS."""
+    if sys.platform == "darwin":
+        return pathlib.Path.home() / "Library/Application Support/minecraft/downloads"
+    if sys.platform == "win32":
+        return pathlib.Path(os.environ["APPDATA"]) / ".minecraft/downloads"
+    return pathlib.Path.home() / ".minecraft/downloads"
+
+
 OUT = pathlib.Path(__file__).resolve().parent.parent / "wynncard/assets/mc"
 FONTS = [
     "language/wynncraft", "tooltip/attribute/sprite", "tooltip/emblem/frame", "tooltip/emblem/sprite",
@@ -20,8 +38,14 @@ FONTS = [
 GUI = "assets/minecraft/textures/gui/sprites/tooltip/"
 
 
-def newest_pack() -> pathlib.Path:
-    packs = [p for p in PACK.glob("*/*") if p.is_file() and p.stat().st_size > 1_000_000]
+def newest_pack(where: pathlib.Path | None) -> pathlib.Path:
+    """The pack zip itself, or the newest pack under a downloads directory (default: the OS location)."""
+    if where is not None and where.is_file():
+        return where
+    root = where or downloads()
+    packs = [p for p in root.rglob("*") if p.is_file() and p.stat().st_size > 1_000_000] if root.is_dir() else []
+    if not packs:
+        sys.exit(f"no resource pack found under {root}; join the Wynncraft server once or pass the pack path")
     return max(packs, key=lambda p: p.stat().st_mtime)
 
 
@@ -107,7 +131,7 @@ def pull_font(pack: Pack, font_id: str, seen: set) -> None:
 
 
 def main() -> None:
-    pack = Pack(newest_pack())
+    pack = Pack(newest_pack(pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else None))
     print("pack:", pack.path.name, len(pack.names), "entries")
     seen = set()
     for font_id in FONTS:

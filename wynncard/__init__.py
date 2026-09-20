@@ -1,4 +1,17 @@
-"""Wynncraft item cards as PNG, rendered the way the game draws its tooltips."""
-from .render import render as render_card
+"""Wynncraft item cards as PNG, rendered the way the game and the Wynntils mod draw their tooltips.
 
-__all__ = ["render_card"]
+    from wynncard import Item, Identification, render
+
+    item = Item("Spring", tier="mythic", kind="weapon", type="bow", average_dps=820,
+                identifications=[Identification.from_api("manaRegen", 30, roll=72.5)])
+    open("spring.png", "wb").write(render(item, scale=4))
+
+`sources.from_wynnpool` and `sources.from_market` build an `Item` from the public item APIs.
+"""
+from .model import Identification, Item, Requirements, Scale, Shiny
+from .render import render, render_image
+from .sources import from_market, from_wynnpool
+
+__all__ = ["Item", "Identification", "Requirements", "Scale", "Shiny",
+           "render", "render_image", "from_wynnpool", "from_market"]
+__version__ = "0.2.0"
