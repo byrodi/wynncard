@@ -50,16 +50,16 @@ def _run_width(runs) -> int:
     return sum(mcfont.width(font_id, value) for value, font_id, _ in runs)
 
 
-def _draw_runs(canvas: Image.Image, x: int, baseline: int, runs) -> None:
+def _draw_runs(canvas: Image.Image, x: int, baseline: int, runs, zoom: int) -> None:
     for value, font_id, color in runs:
         if color is None:  # a pure offset run
             x += mcfont.width(font_id, value)
             continue
         if color == "rainbow":
             for index, char in enumerate(value):
-                x = mcfont.draw(canvas, x, baseline, char, font_id, RAINBOW[index % len(RAINBOW)])
+                x = mcfont.draw(canvas, x, baseline, char, font_id, RAINBOW[index % len(RAINBOW)], zoom)
             continue
-        x = mcfont.draw(canvas, x, baseline, value, font_id, color)
+        x = mcfont.draw(canvas, x, baseline, value, font_id, color, zoom)
 
 
 def _wrapped(runs, width: int) -> list:
@@ -90,25 +90,24 @@ def render(item: dict, info: dict | None = None, scales: list[dict] | None = Non
         else:
             flat.append(line)
 
-    height = LINE_HEIGHT * len(flat)
-    canvas = Image.new("RGBA", (width + 2 * PAD_X, height + 2 * PAD_Y), (0, 0, 0, 0))
+    size = (width + 2 * PAD_X, LINE_HEIGHT * len(flat) + 2 * PAD_Y)
+    canvas = Image.new("RGBA", (size[0] * scale, size[1] * scale), (0, 0, 0, 0))
     tier = (item.get("rarity") or info.get("tier") or "normal").lower()
     prefix = f"{tier}_" if tier in game.TIERS and tier != "normal" else ""
     for part in (f"{prefix}background", f"{prefix}frame"):
-        canvas.alpha_composite(_nine_slice(part, canvas.width, canvas.height))
+        frame = _nine_slice(part, size[0], size[1])
+        canvas.alpha_composite(frame.resize(canvas.size, Image.NEAREST))
 
     for index, line in enumerate(flat):
         baseline = PAD_Y + index * LINE_HEIGHT + 8
         if line[0] == "aligned":
-            _draw_runs(canvas, PAD_X, baseline, line[1])
-            _draw_runs(canvas, PAD_X + width - _run_width(line[2]), baseline, line[2])
+            _draw_runs(canvas, PAD_X, baseline, line[1], scale)
+            _draw_runs(canvas, PAD_X + width - _run_width(line[2]), baseline, line[2], scale)
         elif line[0] == "centered":
-            _draw_runs(canvas, PAD_X + (width - _run_width(line[1])) // 2, baseline, line[1])
+            _draw_runs(canvas, PAD_X + (width - _run_width(line[1])) // 2, baseline, line[1], scale)
         else:
-            _draw_runs(canvas, PAD_X, baseline, line[1])
+            _draw_runs(canvas, PAD_X, baseline, line[1], scale)
 
-    if scale != 1:
-        canvas = canvas.resize((canvas.width * scale, canvas.height * scale), Image.NEAREST)
     buffer = io.BytesIO()
     canvas.save(buffer, format="PNG", optimize=True)
     return buffer.getvalue()

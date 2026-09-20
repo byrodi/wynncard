@@ -122,7 +122,7 @@ def _name(item: dict, info: dict, tier: str) -> list:
     shape, _, variant = (info.get("emblem") or "diamond_1").partition("_")
     frame = chr(0xE000 + (int(variant or 1) - 1) * 0x10 + EMBLEM_SHAPES.index(shape))
     sprite = TYPE_SPRITES.get((info.get("subType") or "").lower(), "")
-    runs = [space(-16), (frame, EMBLEM_FRAME, TIERS[tier][1]), space(-49), (sprite, EMBLEM_SPRITE, "#00eb1c"),
+    runs = [space(-16), (frame, EMBLEM_FRAME, TIERS[tier][1]), space(-49), (sprite, EMBLEM_SPRITE, WHITE),
             space(5), text(item.get("name") or "?", TIERS[tier][0])]
     overall = item.get("overall_roll")
     if overall is not None:

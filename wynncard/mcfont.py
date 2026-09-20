@@ -9,16 +9,38 @@ import functools
 import json
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops
 
 ASSETS = Path(__file__).parent / "assets" / "mc"
 
 
 class Glyph:
-    __slots__ = ("image", "advance", "ascent", "height")
+    __slots__ = ("image", "advance", "ascent", "height", "colored", "_sized")
 
     def __init__(self, image: Image.Image | None, advance: int, ascent: int, height: int):
         self.image, self.advance, self.ascent, self.height = image, advance, ascent, height
+        self.colored = image is not None and _is_colored(image)
+        self._sized: dict[int, Image.Image] = {}
+
+    def sized(self, zoom: int) -> Image.Image:
+        """The glyph at output size.
+
+        The game squeezes some sprites to a fractional height (a 12 px cell drawn 7 px tall); doing that
+        with resampling turns them to mush, so the whole sprite is scaled by whole pixels instead and
+        stays crisp, at the cost of a pixel or two of height.
+        """
+        if zoom not in self._sized:
+            pixels = max(1, round(self.height / self.image.height * zoom))
+            size = (self.image.width * pixels, self.image.height * pixels)
+            self._sized[zoom] = self.image if pixels == 1 else self.image.resize(size, Image.NEAREST)
+        return self._sized[zoom]
+
+
+def _is_colored(cell: Image.Image) -> bool:
+    """Sprites that carry their own colours are drawn as they are; grey ones take the text colour."""
+    red, green, blue, alpha = cell.split()
+    return ImageChops.difference(red, green).getbbox() is not None or \
+        ImageChops.difference(green, blue).getbbox() is not None
 
 
 @functools.cache
@@ -67,8 +89,9 @@ def width(font_id: str, text: str) -> int:
     return sum(g.advance for g in (chars.get(c) for c in text) if g is not None)
 
 
-def draw(canvas: Image.Image, x: int, baseline: int, text: str, font_id: str, color: str | tuple = "#ffffff") -> int:
-    """Draw text onto canvas at the pen position; returns the new pen x."""
+def draw(canvas: Image.Image, x: int, baseline: int, text: str, font_id: str,
+         color: str | tuple = "#ffffff", zoom: int = 1) -> int:
+    """Draw text onto canvas at the pen position, `zoom` pixels per Minecraft pixel; returns the new pen x."""
     chars = font(font_id)
     tint = Image.new("RGBA", (1, 1), color).getpixel((0, 0))
     for char in text:
@@ -76,13 +99,10 @@ def draw(canvas: Image.Image, x: int, baseline: int, text: str, font_id: str, co
         if found is None:
             continue
         if found.image is not None:
-            sprite = found.image
-            scale = found.height / sprite.height
-            if scale != 1:
-                sprite = sprite.resize((max(1, round(sprite.width * scale)), found.height), Image.NEAREST)
-            if tint[:3] != (255, 255, 255):
+            sprite = found.sized(zoom)
+            if tint[:3] != (255, 255, 255) and not found.colored:
                 sprite = _tinted(sprite, tint)
-            canvas.alpha_composite(sprite, (x, baseline - found.ascent))
+            canvas.alpha_composite(sprite, (x * zoom, (baseline - found.ascent) * zoom))
         x += found.advance
     return x
 
