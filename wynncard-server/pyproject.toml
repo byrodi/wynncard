@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wynncard-server"
+version = "0.1.0"
+description = "HTTP front for wynncard: post an item as JSON, get its tooltip as a PNG."
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["wynncard>=0.2"]  # not on PyPI, install from this repository: pip install -e . -e ./wynncard-server
+
+[project.scripts]
+wynncard-server = "wynncard_server:main"
+
+[tool.hatch.build.targets.wheel]
+include = ["wynncard_server.py"]

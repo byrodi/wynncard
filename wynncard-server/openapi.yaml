@@ -1,0 +1,144 @@
+openapi: 3.1.0
+info:
+  title: wynncard-server
+  version: 0.2.0
+  description: Renders Wynncraft item tooltips as PNG cards. No authentication, keep it on a private network.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: http://127.0.0.1:8765
+paths:
+  /card:
+    post:
+      summary: Render one card, or a batch of cards
+      description: |
+        An object renders one card and answers `image/png`. An array of such objects renders a batch
+        and answers a JSON array in the same order; a broken item gets an error entry and the rest
+        still render.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/CardRequest"
+                - type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    $ref: "#/components/schemas/CardRequest"
+      responses:
+        "200":
+          description: A PNG for an object body, a JSON array for an array body.
+          content:
+            image/png:
+              schema:
+                type: string
+                contentMediaType: image/png
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BatchEntry"
+        "400":
+          description: Bad JSON, no item, a scale out of range or a batch size out of range.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Body over 4 MB.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: The render itself failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /health:
+    get:
+      summary: Liveness check
+      responses:
+        "200":
+          description: The server is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ok, wynncard]
+                properties:
+                  ok:
+                    type: boolean
+                    const: true
+                  wynncard:
+                    type: string
+                    description: Version of the wynncard library.
+                    examples: ["0.2.0"]
+components:
+  schemas:
+    CardRequest:
+      description: |
+        One item. Needs `listing`, `info`, or both. A bare Wynnventory listing, with `stat_rolls` or
+        `hash_code` at the top level and no wrapper key, is accepted too.
+      anyOf:
+        - $ref: "#/components/schemas/Card"
+        - $ref: "#/components/schemas/Listing"
+    Card:
+      type: object
+      properties:
+        listing:
+          $ref: "#/components/schemas/Listing"
+        info:
+          type: object
+          description: The Wynnpool or Wynncraft v3 item, for base damage, requirements and major ids.
+        scales:
+          type: array
+          description: Wynnpool weight profiles.
+          items:
+            type: object
+            required: [profile, score]
+            properties:
+              profile:
+                type: string
+                examples: [Main]
+              score:
+                type: number
+                examples: [94.6]
+        scale:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 4
+          description: Output pixels per Minecraft pixel.
+    Listing:
+      type: object
+      description: A Wynnventory Trade Market lot, exactly as /trademarket/listings returns it.
+      properties:
+        name:
+          type: string
+        hash_code:
+          type: integer
+        stat_rolls:
+          type: array
+          items:
+            type: object
+    BatchEntry:
+      oneOf:
+        - type: object
+          required: [png]
+          properties:
+            png:
+              type: string
+              contentEncoding: base64
+              contentMediaType: image/png
+        - $ref: "#/components/schemas/Error"
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string

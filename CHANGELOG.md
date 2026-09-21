@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `wynncard-server`: an HTTP service that takes an item as JSON on `POST /card` and answers the card
+  as PNG, or a batch of up to 100 items as a JSON array of base64 PNGs.
+
 ### Fixed
 
 - A tooltip no longer draws the divider of a section it has no data for, so a market listing

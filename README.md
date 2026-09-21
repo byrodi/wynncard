@@ -71,6 +71,11 @@ percentage, rerolls and shiny stat. `scales` are Wynnpool weight scales, `[{"pro
 - `frame`: `False` leaves the text on a transparent canvas.
 - `min_width`: the narrowest text block in Minecraft pixels, 140 like the game.
 
+## HTTP server
+
+`wynncard-server/` wraps the library in a small HTTP service for callers in other languages:
+`POST /card` with a listing or item as JSON answers `image/png`. See its [README](wynncard-server/README.md).
+
 ## Assets
 
 `wynncard/assets/mc` holds the fonts, sprites and tooltip frames from the Wynncraft resource pack and the

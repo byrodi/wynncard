@@ -1,0 +1,570 @@
+{
+ "amount": 1,
+ "hash_code": -1272241341,
+ "icon": {
+  "format": "attribute",
+  "value": "wand.air3"
+ },
+ "item_type": "GearItem",
+ "listing_price": 1890000,
+ "mod_version": "2.2.5",
+ "name": "Warp",
+ "overall_roll": 66.598015,
+ "rarity": "Mythic",
+ "reroll_count": 4,
+ "shiny_stat": null,
+ "stat_rolls": [
+  {
+   "apiName": "rawAgility",
+   "displayName": "Agility",
+   "internalRoll": {
+    "fixed": false,
+    "high": 101,
+    "low": 98
+   },
+   "possibleValues": {
+    "baseValue": 25,
+    "isPreIdentified": true,
+    "range": {
+     "fixed": true,
+     "high": 25,
+     "low": 25
+    },
+    "statType": {
+     "apiName": "rawAgility",
+     "displayName": "Agility",
+     "internalRollName": "AGILITYPOINTS",
+     "key": "SKILL_AGILITY",
+     "skill": "AGILITY",
+     "specialStatType": "NONE",
+     "unit": "RAW"
+    }
+   },
+   "rollPercentage": "NaN",
+   "statActualValue": {
+    "hasIconPrefix": true,
+    "internalRoll": {
+     "fixed": false,
+     "high": 101,
+     "low": 98
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "rawAgility",
+     "displayName": "Agility",
+     "internalRollName": "AGILITYPOINTS",
+     "key": "SKILL_AGILITY",
+     "skill": "AGILITY",
+     "specialStatType": "NONE",
+     "unit": "RAW"
+    },
+    "value": 25,
+    "vanillaMeter": null
+   },
+   "statRange": {
+    "fixed": true,
+    "high": 25,
+    "low": 25
+   },
+   "statRoll": 25,
+   "unit": "RAW"
+  },
+  {
+   "apiName": "reflection",
+   "displayName": "Reflection",
+   "internalRoll": {
+    "fixed": true,
+    "high": 128,
+    "low": 128
+   },
+   "possibleValues": {
+    "baseValue": 90,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": 117,
+     "low": 27
+    },
+    "statType": {
+     "apiName": "reflection",
+     "displayName": "Reflection",
+     "internalRollName": "REFLECTION",
+     "key": "MISC_REFLECTION",
+     "kind": "REFLECTION",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    }
+   },
+   "rollPercentage": 97.77778,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": true,
+     "high": 128,
+     "low": 128
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "reflection",
+     "displayName": "Reflection",
+     "internalRollName": "REFLECTION",
+     "key": "MISC_REFLECTION",
+     "kind": "REFLECTION",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    },
+    "value": 115,
+    "vanillaMeter": "\ue020"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": 117,
+    "low": 27
+   },
+   "statRoll": 115,
+   "unit": "PERCENT"
+  },
+  {
+   "apiName": "exploding",
+   "displayName": "Exploding",
+   "internalRoll": {
+    "fixed": false,
+    "high": 124,
+    "low": 123
+   },
+   "possibleValues": {
+    "baseValue": 50,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": 65,
+     "low": 15
+    },
+    "statType": {
+     "apiName": "exploding",
+     "displayName": "Exploding",
+     "internalRollName": "EXPLODING",
+     "key": "MISC_EXPLODING",
+     "kind": "EXPLODING",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    }
+   },
+   "rollPercentage": 94.0,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": false,
+     "high": 124,
+     "low": 123
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "exploding",
+     "displayName": "Exploding",
+     "internalRollName": "EXPLODING",
+     "key": "MISC_EXPLODING",
+     "kind": "EXPLODING",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    },
+    "value": 62,
+    "vanillaMeter": "\ue01f"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": 65,
+    "low": 15
+   },
+   "statRoll": 62,
+   "unit": "PERCENT"
+  },
+  {
+   "apiName": "manaRegen",
+   "displayName": "Mana Regen",
+   "internalRoll": {
+    "fixed": false,
+    "high": 92,
+    "low": 91
+   },
+   "possibleValues": {
+    "baseValue": -45,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": -31,
+     "low": -58
+    },
+    "statType": {
+     "apiName": "manaRegen",
+     "displayName": "Mana Regen",
+     "internalRollName": "MANAREGEN",
+     "key": "MISC_MANA_REGEN",
+     "kind": "MANA_REGEN",
+     "specialStatType": "NONE",
+     "unit": "PER_5_S"
+    }
+   },
+   "rollPercentage": 62.96296,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": false,
+     "high": 92,
+     "low": 91
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "manaRegen",
+     "displayName": "Mana Regen",
+     "internalRollName": "MANAREGEN",
+     "key": "MISC_MANA_REGEN",
+     "kind": "MANA_REGEN",
+     "specialStatType": "NONE",
+     "unit": "PER_5_S"
+    },
+    "value": -41,
+    "vanillaMeter": "\ue014"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": -31,
+    "low": -58
+   },
+   "statRoll": -41,
+   "unit": "PER_5_S"
+  },
+  {
+   "apiName": "healthRegen",
+   "displayName": "Health Regen",
+   "internalRoll": {
+    "fixed": true,
+    "high": 73,
+    "low": 73
+   },
+   "possibleValues": {
+    "baseValue": -150,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": -105,
+     "low": -195
+    },
+    "statType": {
+     "apiName": "healthRegen",
+     "displayName": "Health Regen",
+     "internalRollName": "HEALTHREGEN",
+     "key": "MISC_HEALTH_REGEN_PERCENT",
+     "kind": "HEALTH_REGEN_PERCENT",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    }
+   },
+   "rollPercentage": 95.55556,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": true,
+     "high": 73,
+     "low": 73
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "healthRegen",
+     "displayName": "Health Regen",
+     "internalRollName": "HEALTHREGEN",
+     "key": "MISC_HEALTH_REGEN_PERCENT",
+     "kind": "HEALTH_REGEN_PERCENT",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    },
+    "value": -109,
+    "vanillaMeter": "\ue01f"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": -105,
+    "low": -195
+   },
+   "statRoll": -109,
+   "unit": "PERCENT"
+  },
+  {
+   "apiName": "healthRegenRaw",
+   "displayName": "Health Regen",
+   "internalRoll": {
+    "fixed": true,
+    "high": 105,
+    "low": 105
+   },
+   "possibleValues": {
+    "baseValue": -840,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": -588,
+     "low": -1092
+    },
+    "statType": {
+     "apiName": "healthRegenRaw",
+     "displayName": "Health Regen",
+     "internalRollName": "HEALTHREGENRAW",
+     "key": "MISC_HEALTH_REGEN_RAW",
+     "kind": "HEALTH_REGEN_RAW",
+     "specialStatType": "NONE",
+     "unit": "RAW"
+    }
+   },
+   "rollPercentage": 41.666664,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": true,
+     "high": 105,
+     "low": 105
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "healthRegenRaw",
+     "displayName": "Health Regen",
+     "internalRollName": "HEALTHREGENRAW",
+     "key": "MISC_HEALTH_REGEN_RAW",
+     "kind": "HEALTH_REGEN_RAW",
+     "specialStatType": "NONE",
+     "unit": "RAW"
+    },
+    "value": -882,
+    "vanillaMeter": "\ue00d"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": -588,
+    "low": -1092
+   },
+   "statRoll": -882,
+   "unit": "RAW"
+  },
+  {
+   "apiName": "healingEfficiency",
+   "displayName": "Healing Efficiency",
+   "internalRoll": {
+    "fixed": false,
+    "high": 88,
+    "low": 86
+   },
+   "possibleValues": {
+    "baseValue": -30,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": -21,
+     "low": -39
+    },
+    "statType": {
+     "apiName": "healingEfficiency",
+     "displayName": "Healing Efficiency",
+     "internalRollName": "HEALING_EFFICIENCY",
+     "key": "MISC_HEALING_EFFICIENCY",
+     "kind": "HEALING_EFFICIENCY",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    }
+   },
+   "rollPercentage": 72.22222,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": false,
+     "high": 88,
+     "low": 86
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "healingEfficiency",
+     "displayName": "Healing Efficiency",
+     "internalRollName": "HEALING_EFFICIENCY",
+     "key": "MISC_HEALING_EFFICIENCY",
+     "kind": "HEALING_EFFICIENCY",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    },
+    "value": -26,
+    "vanillaMeter": "\ue017"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": -21,
+    "low": -39
+   },
+   "statRoll": -26,
+   "unit": "PERCENT"
+  },
+  {
+   "apiName": "airDamage",
+   "displayName": "Air Damage",
+   "internalRoll": {
+    "fixed": false,
+    "high": 109,
+    "low": 104
+   },
+   "possibleValues": {
+    "baseValue": 15,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": 20,
+     "low": 5
+    },
+    "statType": {
+     "apiName": "airDamage",
+     "displayName": "Air Damage",
+     "internalRollName": "AIRDAMAGEBONUS",
+     "key": "DAMAGE_ANY_AIR_PERCENT",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    }
+   },
+   "rollPercentage": 73.333336,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": false,
+     "high": 109,
+     "low": 104
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "airDamage",
+     "displayName": "Air Damage",
+     "internalRollName": "AIRDAMAGEBONUS",
+     "key": "DAMAGE_ANY_AIR_PERCENT",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    },
+    "value": 16,
+    "vanillaMeter": "\ue018"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": 20,
+    "low": 5
+   },
+   "statRoll": 16,
+   "unit": "PERCENT"
+  },
+  {
+   "apiName": "walkSpeed",
+   "displayName": "Walk Speed",
+   "internalRoll": {
+    "fixed": true,
+    "high": 66,
+    "low": 66
+   },
+   "possibleValues": {
+    "baseValue": 180,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": 234,
+     "low": 54
+    },
+    "statType": {
+     "apiName": "walkSpeed",
+     "displayName": "Walk Speed",
+     "internalRollName": "SPEED",
+     "key": "MISC_WALK_SPEED",
+     "kind": "WALK_SPEED",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    }
+   },
+   "rollPercentage": 36.11111,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": true,
+     "high": 66,
+     "low": 66
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "walkSpeed",
+     "displayName": "Walk Speed",
+     "internalRollName": "SPEED",
+     "key": "MISC_WALK_SPEED",
+     "kind": "WALK_SPEED",
+     "specialStatType": "NONE",
+     "unit": "PERCENT"
+    },
+    "value": 119,
+    "vanillaMeter": "\ue00b"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": 234,
+    "low": 54
+   },
+   "statRoll": 119,
+   "unit": "PERCENT"
+  },
+  {
+   "apiName": "raw2ndSpellCost",
+   "displayName": "2nd Spell Cost",
+   "internalRoll": {
+    "fixed": true,
+    "high": 56,
+    "low": 56
+   },
+   "possibleValues": {
+    "baseValue": 299,
+    "isPreIdentified": false,
+    "range": {
+     "fixed": false,
+     "high": 389,
+     "low": 90
+    },
+    "statType": {
+     "apiName": "raw2ndSpellCost",
+     "displayName": "2nd Spell Cost",
+     "internalRollName": "SPELL_COST_RAW_2",
+     "key": "SPELL_SECOND_SPELL_COST_RAW",
+     "specialStatType": "NONE",
+     "spellType": "SECOND_SPELL",
+     "unit": "RAW"
+    }
+   },
+   "rollPercentage": 25.752508,
+   "statActualValue": {
+    "hasIconPrefix": false,
+    "internalRoll": {
+     "fixed": true,
+     "high": 56,
+     "low": 56
+    },
+    "perfectInternalRoll": false,
+    "statType": {
+     "apiName": "raw2ndSpellCost",
+     "displayName": "2nd Spell Cost",
+     "internalRollName": "SPELL_COST_RAW_2",
+     "key": "SPELL_SECOND_SPELL_COST_RAW",
+     "specialStatType": "NONE",
+     "spellType": "SECOND_SPELL",
+     "unit": "RAW"
+    },
+    "value": 167,
+    "vanillaMeter": "\ue008"
+   },
+   "statRange": {
+    "fixed": false,
+    "high": 389,
+    "low": 90
+   },
+   "statRoll": 167,
+   "unit": "RAW"
+  }
+ ],
+ "tier": null,
+ "timestamp": "Sun, 20 Sep 2026 18:58:46 GMT",
+ "type": "WAND",
+ "unidentified": false
+}
