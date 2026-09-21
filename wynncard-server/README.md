@@ -80,7 +80,3 @@ one that pays for them.
 
 The tests start the real server on a loopback port and talk to it over HTTP with a real Wynnventory
 listing in `tests/listing.json`.
-
-## Who calls it
-
-wynnflip, through `Renderer`, for every card it sends.
