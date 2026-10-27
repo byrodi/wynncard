@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { StatInfo } from '../lib/data.ts';
   import type { Identification, Item } from '../lib/item.ts';
-  import { rollPercentage } from '../lib/rolls.ts';
+  import { overallRoll, rollPercentage } from '../lib/rolls.ts';
 
   interface Props {
     item: Item;
@@ -34,7 +34,8 @@
     }))
   );
   const rolling = $derived(item.identifications.some((stat) => rolls[stat.stat]));
-  let allRolls = $state(80);
+  // The top slider shows the mean of the rolls as they are, so moving any one roll moves it too.
+  const average = $derived(overallRoll(item.identifications) ?? 0);
   let adding = $state('');
 
   function label(stat: Identification): string {
@@ -100,14 +101,15 @@
   {#if rolling}
     <div class="all">
       <label class="field">
-        <span>Set every roll to {allRolls}%</span>
+        <span>All rolls, {average.toFixed(1)}% on average</span>
         <input
           type="range"
           min="0"
           max="100"
-          bind:value={allRolls}
-          oninput={() => {
-            onall(allRolls);
+          step="0.1"
+          value={average}
+          oninput={(event) => {
+            onall(Number(event.currentTarget.value));
           }}
         />
       </label>
@@ -116,7 +118,6 @@
           class="button"
           type="button"
           onclick={() => {
-            allRolls = 100;
             onall(100);
           }}
         >
