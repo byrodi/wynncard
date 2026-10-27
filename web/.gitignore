@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# Written by tools/build_site_data.py
+public/data/
+public/py/
