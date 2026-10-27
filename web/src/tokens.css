@@ -1,0 +1,169 @@
+:root {
+  color-scheme: light;
+  --fd-bg: #fcfafb;
+  --fd-bg-app: #faf8f9;
+  --fd-surface: #ffffff;
+  --fd-text: #29242a;
+  --fd-muted: #74616c;
+  --fd-accent: #e47f93;
+  --fd-accent-hover: #e98c9e;
+  --fd-on-accent: #392029;
+  --fd-rose: #a94460;
+  --fd-rose-strong: #9a3f55;
+  --fd-rose-soft: #fcecf0;
+  --fd-plum: #9272a8;
+  --fd-plum-text: #715385;
+  --fd-plum-soft: #f2edf8;
+  --fd-line: #eee4e9;
+  --fd-line-app: #e9edf2;
+  --fd-control-line: #a88c9a;
+  --fd-success: #267348;
+  --fd-error: #a8324b;
+  --fd-warning: #b86e00;
+  --fd-brand: #d78494;
+  --fd-brand-blush: #efccd4;
+  --fd-brand-cream: #fdeff2;
+  --fd-brand-ink: #8e3a50;
+  --fd-font: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --fd-radius-sm: 12px;
+  --fd-radius-md: 17px;
+  --fd-radius-lg: 24px;
+  --fd-shadow: 0 8px 35px rgb(118 52 77 / 4%);
+  --fd-ease: 180ms ease;
+}
+.fd-theme {
+  margin: 0;
+  font-family: var(--fd-font);
+  color: var(--fd-text);
+  background: var(--fd-bg);
+  line-height: 1.55;
+}
+.fd-theme *,
+.fd-theme *::before,
+.fd-theme *::after {
+  box-sizing: border-box;
+}
+.fd-theme :where(button, input, select, textarea) {
+  font: inherit;
+}
+.fd-theme :where(button, a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--fd-rose);
+  outline-offset: 4px;
+}
+.fd-theme ::selection {
+  background: #f5c6d2;
+  color: var(--fd-text);
+}
+.fd-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border: 1px solid var(--fd-control-line);
+  border-radius: var(--fd-radius-md);
+  background: var(--fd-surface);
+  color: var(--fd-text);
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--fd-ease),
+    transform var(--fd-ease);
+}
+.fd-button--primary {
+  background: var(--fd-accent);
+  border-color: var(--fd-accent);
+  color: var(--fd-on-accent);
+}
+@media (hover: hover) {
+  .fd-button:hover {
+    background: var(--fd-rose-soft);
+    transform: translateY(-2px);
+  }
+  .fd-button--primary:hover {
+    background: var(--fd-accent-hover);
+  }
+}
+.fd-button:disabled {
+  opacity: 0.65;
+  cursor: default;
+  transform: none;
+}
+.fd-panel {
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-lg);
+  background: var(--fd-surface);
+  box-shadow: var(--fd-shadow);
+}
+.fd-notice {
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--fd-line);
+  border-left: 4px solid var(--fd-rose);
+  border-radius: var(--fd-radius-sm);
+  background: var(--fd-surface);
+}
+.fd-notice--error {
+  border-left-color: var(--fd-error);
+  background: var(--fd-rose-soft);
+  color: var(--fd-error);
+}
+.fd-notice--success {
+  border-left-color: var(--fd-success);
+}
+.fd-notice--system {
+  border-left-color: var(--fd-plum);
+}
+.fd-hatch {
+  background-color: var(--fd-bg-app);
+  background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--fd-line) 6px 8px);
+}
+.fd-hatch--card {
+  border: 1px solid var(--fd-control-line);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 6px,
+    color-mix(in srgb, var(--fd-muted) 12%, var(--fd-bg-app)) 6px 7px
+  );
+  color: var(--fd-muted);
+}
+.fd-hatch--special {
+  background-color: var(--fd-plum-soft);
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 6px,
+    var(--fd-brand-blush) 6px 8px
+  );
+}
+.fd-zone {
+  padding: 15px;
+  border: 2px dashed var(--fd-warning);
+  border-radius: var(--fd-radius-lg);
+  background: var(--fd-surface);
+}
+.fd-zone--danger {
+  border-color: var(--fd-error);
+}
+.fd-zone--danger .fd-button {
+  border-color: var(--fd-error);
+  color: var(--fd-error);
+}
+.fd-ghost {
+  border: 1px dashed var(--fd-control-line);
+  background: var(--fd-bg-app);
+  color: var(--fd-muted);
+}
+.fd-muted {
+  color: var(--fd-muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fd-theme *,
+  .fd-theme *::before,
+  .fd-theme *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

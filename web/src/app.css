@@ -1,0 +1,255 @@
+@font-face {
+  font-family: 'Wynncard Minecraft';
+  src: url('./assets/minecraft.woff') format('woff');
+  font-display: swap;
+}
+
+html {
+  scrollbar-gutter: stable;
+  background: var(--fd-bg-app);
+}
+
+body {
+  min-height: 100svh;
+  background: var(--fd-bg-app);
+}
+
+.wrap {
+  width: min(1280px, 100%);
+  margin-inline: auto;
+  padding-inline: clamp(16px, 3vw, 32px);
+}
+
+/* The game's pixel font: crisp only at multiples of 8 px. */
+.pixel {
+  font-family: 'Wynncard Minecraft', ui-monospace, monospace;
+  font-weight: 400;
+  letter-spacing: 0;
+  -webkit-font-smoothing: none;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+a {
+  color: var(--fd-rose);
+  text-underline-offset: 4px;
+}
+
+.muted {
+  color: var(--fd-muted);
+}
+
+.panel {
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-lg);
+  background: var(--fd-surface);
+  box-shadow: var(--fd-shadow);
+}
+
+/* Form controls shared by every section. */
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field > span,
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fd-muted);
+}
+
+input:not([type='checkbox'], [type='radio'], [type='range']),
+select,
+textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--fd-control-line);
+  border-radius: var(--fd-radius-sm);
+  background: var(--fd-surface);
+  color: var(--fd-text);
+}
+
+textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+input[type='number'] {
+  font-variant-numeric: tabular-nums;
+}
+
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'] {
+  accent-color: var(--fd-rose);
+}
+
+input[type='range'] {
+  width: 100%;
+  min-height: 32px;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  cursor: pointer;
+}
+
+.check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+/* Segmented choice: radios drawn as one row of pills. */
+.segments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.segments legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+
+.segment {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--fd-control-line);
+  border-radius: 999px;
+  background: var(--fd-surface);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--fd-ease);
+}
+
+.segment input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.segment:has(input:checked) {
+  background: var(--fd-rose-soft);
+  border-color: var(--fd-rose);
+  box-shadow: inset 0 0 0 1px var(--fd-rose);
+  color: var(--fd-rose-strong);
+}
+
+.segment:has(input:focus-visible) {
+  outline: 3px solid var(--fd-rose);
+  outline-offset: 2px;
+}
+
+.button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--fd-control-line);
+  border-radius: var(--fd-radius-md);
+  background: var(--fd-surface);
+  color: var(--fd-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--fd-ease);
+}
+
+.button--primary {
+  background: var(--fd-accent);
+  border-color: var(--fd-accent);
+  color: var(--fd-on-accent);
+}
+
+.button--quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--fd-rose);
+}
+
+@media (hover: hover) {
+  .button:hover {
+    background: var(--fd-rose-soft);
+  }
+  .button--primary:hover {
+    background: var(--fd-accent-hover);
+  }
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.icon-button {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  flex: none;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid var(--fd-control-line);
+}
+
+.status {
+  min-height: 24px;
+  margin: 0;
+  padding-inline: 4px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--fd-rose-strong);
+}
+
+.status--error {
+  color: var(--fd-error);
+}
+
+@keyframes fd-flash {
+  from {
+    background: var(--fd-rose-soft);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+.flash {
+  animation: fd-flash 600ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash {
+    animation: none;
+  }
+}
