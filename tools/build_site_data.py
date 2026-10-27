@@ -9,8 +9,9 @@
   `[name, tier, type, level, file]`, sorted by name, for the preset search. Some items share a name,
   like Aftershock and the Masterwork Aftershock that also prints as Aftershock; such a row gets the
   internal name as a sixth field.
-- `data/items/<file>.json`: one preset per item, `{"item": <spec dict of the base item>,
-  "rolls": {stat key: [every value it can roll, worst first]}}`; fixed identifications have no rolls.
+- `data/items/<file>.json`: one preset per item, `{"item": <spec dict of the base item>, "fixed": [stat key]}`.
+  Each identification's value is its base; the editor works out the values it rolls from there. `fixed`
+  lists the identifications that never roll.
   An item Wynnpool weighs also gets `"weights": [{"name": "Main", "stats": {stat key: weight}}]`.
 
 The item database comes from the API unless `--source` names a saved copy. Each item is checked on the
@@ -84,7 +85,7 @@ def items(out: Path, source: str | None, weighed: dict[str, list[dict]] | None =
         try:
             item = from_wynnpool(info)
             render_image(item, scale=1)
-            preset = {"item": to_dict(item), "rolls": _rolls(info)}
+            preset = {"item": to_dict(item), "fixed": _fixed(info)}
         except (ValueError, KeyError, TypeError) as e:  # a broken entry is reported, the rest still build
             problems.append(f"{name}: {type(e).__name__}: {e}")
             continue
@@ -112,10 +113,10 @@ def preview(out: Path, info: dict | None) -> None:
         print(f"warning: no {PREVIEW_ITEM} in the database, no link preview", file=sys.stderr)
         return
     item = from_wynnpool(info)
-    best = _rolls(info)
+    fixed = _fixed(info)
     for stat in item.identifications:
-        if stat.key in best:
-            stat.value, stat.roll = best[stat.key][-1], 100.0
+        if stat.key not in fixed:
+            stat.value, stat.roll = rolls.values(int(stat.value), stat.inverted)[-1], 100.0
     item.overall_roll = 100.0
     card = render_image(item, scale=2)
     canvas = Image.new("RGBA", PREVIEW_SIZE, PREVIEW_BACKGROUND)
@@ -123,21 +124,20 @@ def preview(out: Path, info: dict | None) -> None:
     canvas.convert("RGB").save(out / "og.png", optimize=True)
 
 
-def _rolls(info: dict) -> dict[str, list[int]]:
-    """Possible values of each rolling identification, checked against the range the API states."""
-    out = {}
+def _fixed(info: dict) -> list[str]:
+    """The identifications that never roll; the others' ranges are checked against the ones the API states."""
+    fixed = []
     for api, value in (info.get("identifications") or {}).items():
-        if not isinstance(value, dict):
-            continue  # a plain number never rolls
         stat = stats.lookup(api)
         if stat is None:
             raise ValueError(f"unknown identification {api}")
+        if not isinstance(value, dict):
+            fixed.append(stat.key)  # a plain number never rolls
+            continue
         possible = rolls.values(value["raw"], stat.inverted)
         if {possible[0], possible[-1]} != {value["min"], value["max"]}:
             raise ValueError(f"{api} rolls {possible[0]}..{possible[-1]}, the API says {value['min']}..{value['max']}")
-        if len(possible) > 1:
-            out[stat.key] = possible
-    return out
+    return fixed
 
 
 def _get(url: str):

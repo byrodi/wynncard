@@ -1,19 +1,20 @@
 <script lang="ts">
   import type { StatInfo } from '../lib/data.ts';
   import type { Identification, Item } from '../lib/item.ts';
-  import { overallRoll, rollPercentage } from '../lib/rolls.ts';
+  import { overallRoll, rollPercentage, valueNearest } from '../lib/rolls.ts';
 
   interface Props {
     item: Item;
-    rolls: Readonly<Record<string, readonly number[]>>;
-    fixed: readonly string[];
+    /** The identifications with the rolls their values have, in the editor's order. */
+    rolled: readonly Identification[];
     stats: readonly StatInfo[];
+    valuesOf: (stat: Identification) => readonly number[];
     overall: number | null;
     onall: (percent: number) => void;
     onrandom: () => void;
   }
 
-  let { item = $bindable(), rolls, fixed, stats, overall, onall, onrandom }: Props = $props();
+  let { item = $bindable(), rolled, stats, valuesOf, overall, onall, onrandom }: Props = $props();
 
   const GROUPS = [
     ['SKILL_', 'Skill points'],
@@ -23,6 +24,7 @@
     ['CRITICAL_', 'Damage'],
     ['SPELL_', 'Spell costs'],
   ] as const;
+  const NEW_BASE = 10;
 
   const byKey = $derived(new Map(stats.flatMap((s) => [[s.key, s] as const, [s.api, s] as const])));
   const grouped = $derived(
@@ -33,14 +35,10 @@
       ),
     }))
   );
-  const rolling = $derived(item.identifications.some((stat) => rolls[stat.stat]));
+  const rolling = $derived(item.identifications.some((stat) => !stat.fixed));
   // The top slider shows the mean of the rolls as they are, so moving any one roll moves it too.
-  const average = $derived(overallRoll(item.identifications) ?? 0);
+  const average = $derived(overallRoll(rolled) ?? 0);
   let adding = $state('');
-
-  function label(stat: Identification): string {
-    return stat.name ?? byKey.get(stat.stat)?.name ?? stat.stat;
-  }
 
   function unit(stat: Identification): string {
     return stat.unit ?? byKey.get(stat.stat)?.unit ?? '';
@@ -54,15 +52,10 @@
     return `${value > 0 ? '+' : ''}${value}`;
   }
 
-  function slide(stat: Identification, values: readonly number[], index: number): void {
-    stat.value = values[index] ?? stat.value;
-    stat.roll = rollPercentage(values, stat.value);
-  }
-
   function setStat(stat: Identification, key: string): void {
     if (key === '') {
-      stat.stat = stat.name ?? 'Custom Stat';
-      stat.name ??= stat.stat;
+      stat.name ??= byKey.get(stat.stat)?.name ?? 'Custom Stat';
+      stat.stat = stat.name;
       return;
     }
     stat.stat = key;
@@ -71,21 +64,29 @@
     delete stat.inverted;
   }
 
-  function setRoll(stat: Identification, raw: string): void {
-    const roll = Number.parseFloat(raw);
-    if (Number.isFinite(roll)) {
-      stat.roll = roll;
-    } else {
-      delete stat.roll;
+  /** A new base keeps the roll where it was: the value moves to the same spot in the new range. */
+  function setBase(stat: Identification, raw: string): void {
+    const base = Number.parseInt(raw, 10);
+    if (!Number.isFinite(base)) {
+      return;
     }
+    const percent = rollPercentage(valuesOf(stat), stat.value) ?? 70;
+    stat.base = base;
+    stat.value = stat.fixed ? base : valueNearest(valuesOf(stat), percent);
+  }
+
+  function setFixed(stat: Identification, fixed: boolean): void {
+    stat.fixed = fixed;
+    stat.value = stat.base ?? stat.value;
   }
 
   function add(): void {
-    if (adding === '') {
-      item.identifications.push({ stat: 'Custom Stat', name: 'Custom Stat', value: 1 });
-    } else {
-      item.identifications.push({ stat: adding, value: 1 });
-    }
+    const stat: Identification =
+      adding === ''
+        ? { stat: 'Custom Stat', name: 'Custom Stat', value: NEW_BASE }
+        : { stat: adding, value: NEW_BASE };
+    stat.base = NEW_BASE;
+    item.identifications.push(stat);
     adding = '';
   }
 </script>
@@ -134,120 +135,122 @@
 
   <ul class="rows">
     {#each item.identifications as stat, index (index)}
-      {@const values = rolls[stat.stat]}
+      {@const values = valuesOf(stat)}
+      {@const roll = rolled[index]?.roll}
+      {@const known = byKey.has(stat.stat)}
       <li class="row">
-        {#if values}
-          <div class="rolled">
-            <label class="field">
-              <span class="row-label">
-                <span>{label(stat)}</span>
-                <span class="value">
-                  {signed(stat.value)}{unit(stat)}
-                  {#if stat.roll !== undefined}<span class="muted">[{stat.roll.toFixed(1)}%]</span
-                    >{/if}
-                </span>
-              </span>
-              <input
-                type="range"
-                min="0"
-                max={values.length - 1}
-                value={Math.max(0, values.indexOf(stat.value))}
-                aria-valuetext={`${signed(stat.value)}${unit(stat)}, roll ${stat.roll?.toFixed(1) ?? 'fixed'}%`}
-                oninput={(event) => {
-                  slide(stat, values, Number(event.currentTarget.value));
-                }}
-              />
-            </label>
-            <span class="muted range">{signed(values[0] ?? 0)} to {signed(values.at(-1) ?? 0)}</span
+        <div class="line">
+          <label class="field stat-pick">
+            <span>Stat</span>
+            <select
+              value={known ? (byKey.get(stat.stat)?.key ?? '') : ''}
+              onchange={(event) => {
+                setStat(stat, event.currentTarget.value);
+              }}
             >
-          </div>
-        {:else if fixed.includes(stat.stat)}
-          <div class="rolled">
-            <span class="row-label">
-              <span>{label(stat)}</span>
-              <span class="value">{signed(stat.value)}{unit(stat)}</span>
-            </span>
-            <span class="muted range">Fixed on this item, it never rolls</span>
-          </div>
-        {:else}
-          <div class="custom">
-            <label class="field stat-pick">
-              <span>Stat</span>
-              <select
-                value={byKey.has(stat.stat) ? (byKey.get(stat.stat)?.key ?? '') : ''}
-                onchange={(event) => {
-                  setStat(stat, event.currentTarget.value);
-                }}
-              >
-                <option value="">Custom stat…</option>
-                {#each grouped as group (group.label)}
-                  <optgroup label={group.label}>
-                    {#each group.stats as info (info.key)}
-                      <option value={info.key}>{optionLabel(info)}</option>
-                    {/each}
-                  </optgroup>
-                {/each}
-              </select>
-            </label>
-            {#if !byKey.has(stat.stat)}
-              <label class="field">
-                <span>Name</span>
-                <input
-                  type="text"
-                  value={stat.name ?? stat.stat}
-                  oninput={(event) => {
-                    stat.name = event.currentTarget.value;
-                    stat.stat = event.currentTarget.value || 'Custom Stat';
-                  }}
-                />
-              </label>
-              <label class="field small">
-                <span>Unit</span>
-                <select bind:value={stat.unit}>
-                  <option value="">none</option>
-                  <option value="%">%</option>
-                  <option value="/3s">/3s</option>
-                  <option value="/5s">/5s</option>
-                  <option value=" tier">tier</option>
-                </select>
-              </label>
-            {/if}
-            <label class="field small">
-              <span>Value</span>
-              <input type="number" step="1" bind:value={stat.value} />
-            </label>
-            <label class="field small">
-              <span>Roll %</span>
+              <option value="">Custom stat…</option>
+              {#each grouped as group (group.label)}
+                <optgroup label={group.label}>
+                  {#each group.stats as info (info.key)}
+                    <option value={info.key}>{optionLabel(info)}</option>
+                  {/each}
+                </optgroup>
+              {/each}
+            </select>
+          </label>
+          <label class="field base">
+            <span>Base</span>
+            <input
+              type="number"
+              step="1"
+              value={stat.base ?? stat.value}
+              oninput={(event) => {
+                setBase(stat, event.currentTarget.value);
+              }}
+            />
+          </label>
+          <label class="check fixed" title="The stat never rolls: its value is its base">
+            <input
+              type="checkbox"
+              checked={stat.fixed === true}
+              onchange={(event) => {
+                setFixed(stat, event.currentTarget.checked);
+              }}
+            />
+            Fixed
+          </label>
+          <button
+            class="button icon-button"
+            type="button"
+            aria-label={`Remove ${stat.name ?? byKey.get(stat.stat)?.name ?? stat.stat}`}
+            title="Remove"
+            onclick={() => item.identifications.splice(index, 1)}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {#if !known}
+          <div class="line custom">
+            <label class="field">
+              <span>Name</span>
               <input
-                type="number"
-                min="0"
-                max="100"
-                step="0.1"
-                placeholder="none"
-                value={stat.roll ?? ''}
+                type="text"
+                value={stat.name ?? stat.stat}
                 oninput={(event) => {
-                  setRoll(stat, event.currentTarget.value);
+                  stat.name = event.currentTarget.value;
+                  stat.stat = event.currentTarget.value || 'Custom Stat';
                 }}
               />
+            </label>
+            <label class="field unit">
+              <span>Unit</span>
+              <select bind:value={stat.unit}>
+                <option value="">none</option>
+                <option value="%">%</option>
+                <option value="/3s">/3s</option>
+                <option value="/5s">/5s</option>
+                <option value=" tier">tier</option>
+              </select>
             </label>
           </div>
         {/if}
-        <button
-          class="button icon-button"
-          type="button"
-          aria-label={`Remove ${label(stat)}`}
-          title="Remove"
-          onclick={() => item.identifications.splice(index, 1)}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path
-              d="M6 6l12 12M18 6L6 18"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
+
+        {#if stat.fixed}
+          <p class="muted range">
+            Fixed at {signed(stat.base ?? stat.value)}{unit(stat)}, it never rolls
+          </p>
+        {:else}
+          <label class="field roll">
+            <span class="row-label">
+              <span>Value</span>
+              <span class="value">
+                {signed(stat.value)}{unit(stat)}
+                {#if roll !== undefined}<span class="muted">[{roll.toFixed(1)}%]</span>{/if}
+              </span>
+            </span>
+            <input
+              type="range"
+              min="0"
+              max={values.length - 1}
+              value={Math.max(0, values.indexOf(stat.value))}
+              aria-valuetext={`${signed(stat.value)}${unit(stat)}${roll === undefined ? '' : `, roll ${roll.toFixed(1)}%`}`}
+              oninput={(event) => {
+                stat.value = values[Number(event.currentTarget.value)] ?? stat.value;
+              }}
             />
-          </svg>
-        </button>
+          </label>
+          <span class="muted range">
+            Rolls {signed(values[0] ?? 0)} to {signed(values.at(-1) ?? 0)}
+          </span>
+        {/if}
       </li>
     {/each}
   </ul>
@@ -315,19 +318,40 @@
   }
 
   .row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-block: 10px;
+    display: grid;
+    gap: 8px;
+    padding-block: 14px;
   }
 
   .row + .row {
     border-top: 1px solid var(--fd-line-app);
   }
 
-  .rolled {
-    flex: 1;
-    min-width: 0;
+  .line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 10px;
+  }
+
+  .stat-pick {
+    flex: 1 1 220px;
+  }
+
+  .base {
+    flex: 0 1 110px;
+  }
+
+  .custom .field {
+    flex: 1 1 160px;
+  }
+
+  .custom .unit {
+    flex: 0 1 110px;
+  }
+
+  .fixed {
+    font-size: 14px;
   }
 
   .row-label {
@@ -344,19 +368,8 @@
   }
 
   .range {
+    margin: 0;
     font-size: 12px;
-  }
-
-  .custom {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 10px;
-    min-width: 0;
-  }
-
-  .stat-pick {
-    grid-column: span 2;
   }
 
   .add {

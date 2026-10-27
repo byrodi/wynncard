@@ -35,6 +35,8 @@ export default defineConfig(
       '@typescript-eslint/prefer-readonly': 'error',
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      // Dropping keys with `const { a: _a, ...rest } = x` is the point of the rest, not an unused name.
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
     },
   },
   {

@@ -12,6 +12,9 @@ export interface RenderOptions {
 export type RendererState =
   { kind: 'loading'; stage: string } | { kind: 'ready' } | { kind: 'failed'; error: string };
 
+/** Python functions the worker exposes besides drawing; each takes and returns a string. */
+export type PythonCall = 'wynntils_decode' | 'wynntils_encode';
+
 export type ToWorker =
   | { kind: 'init'; base: string }
   | {
@@ -20,15 +23,19 @@ export type ToWorker =
       item: Partial<Item>;
       options: RenderOptions;
       png: boolean;
-    };
+    }
+  | { kind: 'call'; id: number; fn: PythonCall; arg: string };
 
 export type FromWorker =
   | { kind: 'state'; state: RendererState }
   | { kind: 'done'; id: number; width: number; height: number; buffer: ArrayBuffer }
+  | { kind: 'result'; id: number; value: string }
   | { kind: 'error'; id: number; error: string };
 
+type Reply = Extract<FromWorker, { kind: 'done' | 'result' }>;
+
 interface Waiting {
-  resolve(reply: Extract<FromWorker, { kind: 'done' }>): void;
+  resolve(reply: Reply): void;
   reject(error: Error): void;
 }
 
@@ -46,6 +53,7 @@ export class Renderer {
           onState(message.state);
           break;
         case 'done':
+        case 'result':
           this.waiting.get(message.id)?.resolve(message);
           this.waiting.delete(message.id);
           break;
@@ -63,24 +71,35 @@ export class Renderer {
 
   /** The card as pixels for a canvas: no PNG encoding, which costs more than drawing it. */
   async pixels(item: Partial<Item>, options: RenderOptions): Promise<ImageData> {
-    const reply = await this.request(item, options, false);
+    const reply = await this.request({ kind: 'render', id: 0, item, options, png: false });
+    if (reply.kind !== 'done') {
+      throw new Error('The worker answered a drawing with something else');
+    }
     return new ImageData(new Uint8ClampedArray(reply.buffer), reply.width, reply.height);
   }
 
   async png(item: Partial<Item>, options: RenderOptions): Promise<Blob> {
-    const reply = await this.request(item, options, true);
+    const reply = await this.request({ kind: 'render', id: 0, item, options, png: true });
+    if (reply.kind !== 'done') {
+      throw new Error('The worker answered a drawing with something else');
+    }
     return new Blob([reply.buffer], { type: 'image/png' });
   }
 
-  private request(
-    item: Partial<Item>,
-    options: RenderOptions,
-    png: boolean
-  ): Promise<Extract<FromWorker, { kind: 'done' }>> {
+  /** Runs one of the worker's Python functions; a Python error rejects with its message. */
+  async call(fn: PythonCall, arg: string): Promise<string> {
+    const reply = await this.request({ kind: 'call', id: 0, fn, arg });
+    if (reply.kind !== 'result') {
+      throw new Error('The worker answered a call with something else');
+    }
+    return reply.value;
+  }
+
+  private request(message: Extract<ToWorker, { id: number }>): Promise<Reply> {
     const id = this.nextId++;
     return new Promise((resolve, reject) => {
       this.waiting.set(id, { resolve, reject });
-      this.post({ kind: 'render', id, item, options, png });
+      this.post({ ...message, id });
     });
   }
 

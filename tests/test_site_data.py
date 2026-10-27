@@ -25,7 +25,7 @@ class SiteDataTest(unittest.TestCase):
             problems = build_site_data.items(out, str(source), build_site_data.weights(str(weights_source)))
         return out, problems, errors.getvalue()
 
-    def test_presets_carry_the_base_item_and_its_rolls(self):
+    def test_presets_carry_the_base_item_and_its_fixed_stats(self):
         spring = INFO | {"displayName": "Spring", "internalName": "Spring"}
         twin = INFO | {"displayName": "Spring", "internalName": "Masterwork Spring"}
         out, problems, _ = self.build([spring, twin, {"type": "ingredient", "displayName": "Dust"}])
@@ -35,9 +35,9 @@ class SiteDataTest(unittest.TestCase):
                                  ["Spring", "mythic", "wand", 97, "masterwork-spring", "Masterwork Spring"]])
         preset = json.loads((out / "data" / "items" / "spring.json").read_text())
         self.assertEqual(preset["item"]["name"], "Spring")
-        self.assertEqual(preset["rolls"]["MISC_MANA_REGEN"][::30], [9, 39])
-        self.assertEqual(preset["rolls"]["SPELL_SECOND_SPELL_COST_RAW"], [-1, -2, -3])
-        self.assertNotIn("SKILL_INTELLIGENCE", preset["rolls"])  # a plain number never rolls
+        bases = {stat["stat"]: stat["value"] for stat in preset["item"]["identifications"]}
+        self.assertEqual((bases["MISC_MANA_REGEN"], bases["SPELL_SECOND_SPELL_COST_RAW"]), (30, -2))
+        self.assertEqual(preset["fixed"], ["SKILL_INTELLIGENCE"])  # a plain number never rolls
 
     def test_wynnpool_weights_come_with_the_preset_under_stat_keys(self):
         spring = INFO | {"displayName": "Spring", "internalName": "Spring"}

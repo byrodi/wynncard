@@ -1,24 +1,56 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { overallRoll, rollPercentage, valueAt, weightedScore } from './rolls.ts';
+import {
+  overallRoll,
+  possibleValues,
+  rollPercentage,
+  valueAtRoll,
+  valueNearest,
+  weightedScore,
+} from './rolls.ts';
 
-// Values as tools/build_site_data.py writes them, worst first.
-const MANA_REGEN = Array.from({ length: 21 }, (_, i) => 6 + i); // raw 20: 6 to 26
-const SPELL_COST = [-1, -2, -3, -4]; // raw -3, a cost reduction: -4 is the best roll
-
-test('roll percentage follows Wynntils', () => {
-  assert.equal(rollPercentage(MANA_REGEN, 26), 100);
-  assert.equal(rollPercentage(MANA_REGEN, 6), 0);
-  assert.equal(rollPercentage(MANA_REGEN, 16), 50);
-  assert.equal(rollPercentage(SPELL_COST, -4), 100);
-  assert.equal(rollPercentage([7], 7), undefined);
+// The cases of tests/test_spec.py RollsTest, so the two implementations cannot drift apart.
+test('a positive base rolls 30 to 130 percent', () => {
+  assert.deepEqual(
+    possibleValues(30, false),
+    Array.from({ length: 31 }, (_, i) => 9 + i)
+  );
+  assert.deepEqual(possibleValues(300, false).slice(0, 3), [90, 93, 96]);
 });
 
-test('valueAt picks the closest value the item can roll', () => {
-  assert.equal(valueAt(MANA_REGEN, 100), 26);
-  assert.equal(valueAt(MANA_REGEN, 52), 16);
-  assert.equal(valueAt(SPELL_COST, 0), -1);
-  assert.equal(valueAt(SPELL_COST, 70), -3);
+test('halves round like Wynntils', () => {
+  assert.deepEqual(possibleValues(5, false), [2, 3, 4, 5, 6, 7]);
+  assert.deepEqual(possibleValues(-5, true), [-1, -2, -3, -4, -5, -6]);
+});
+
+test('a negative base rolls 70 to 130 percent', () => {
+  assert.deepEqual(possibleValues(-10, false), [-13, -12, -11, -10, -9, -8, -7]);
+  assert.equal(rollPercentage(possibleValues(-10, false), -7), 100);
+});
+
+test('a spell cost reduction is best at its largest', () => {
+  assert.deepEqual(possibleValues(-2, true), [-1, -2, -3]);
+  assert.equal(rollPercentage(possibleValues(-11, true), -14), 100);
+  assert.deepEqual(possibleValues(5, true), [7, 6, 5, 4]);
+});
+
+test('a single possible value has no percentage', () => {
+  assert.deepEqual(possibleValues(1, false), [1]);
+  assert.equal(rollPercentage([1], 1), undefined);
+  assert.deepEqual(possibleValues(0, false), [0]);
+});
+
+test('an internal roll gives the value Wynntils calculates', () => {
+  assert.equal(valueAtRoll(20, 130, false), 26);
+  assert.equal(valueAtRoll(20, 30, false), 6);
+  assert.equal(valueAtRoll(-3, 130, true), -4);
+});
+
+test('valueNearest picks the closest value the item can roll', () => {
+  const manaRegen = possibleValues(20, false);
+  assert.equal(valueNearest(manaRegen, 100), 26);
+  assert.equal(valueNearest(manaRegen, 52), 16);
+  assert.equal(valueNearest([-1, -2, -3, -4], 70), -3);
 });
 
 test('a weight profile is a weighted mean, negative weights from the other end', () => {

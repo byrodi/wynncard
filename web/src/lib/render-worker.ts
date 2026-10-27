@@ -1,14 +1,14 @@
 // Runs wynncard in Pyodide, off the main thread: the same Python that renders cards anywhere else
 // draws the preview here, so the browser and the library cannot disagree about a single pixel.
 
-import type { ToWorker, FromWorker } from './renderer.ts';
+import type { FromWorker, PythonCall, ToWorker } from './renderer.ts';
 
 // Pinned: a new Pyodide is a new Python and a new Pillow, and that is checked before it ships.
 const PYODIDE = 'https://cdn.jsdelivr.net/pyodide/v314.0.7/full/';
 
 const DRAW = `
 import json
-from wynncard import from_dict, render, render_image
+from wynncard import from_dict, render, render_image, wynntils
 
 def draw(item, options, png):
     item = from_dict(json.loads(item))
@@ -17,6 +17,12 @@ def draw(item, options, png):
         return 0, 0, render(item, **options)
     image = render_image(item, **options)
     return image.width, image.height, image.tobytes()
+
+def wynntils_decode(text):
+    return json.dumps(wynntils.decode(text))
+
+def wynntils_encode(data):
+    return wynntils.encode(json.loads(data))
 `;
 
 interface PyProxy {
@@ -39,7 +45,9 @@ interface WorkerScope {
 // The dom lib types `self` as a window; in this file it is the worker's own scope.
 const scope = self as unknown as WorkerScope;
 let draw: ((item: string, options: string, png: boolean) => PyProxy) | undefined;
-const queue: Array<Extract<ToWorker, { kind: 'render' }>> = [];
+let python: ((fn: PythonCall, arg: string) => string) | undefined;
+// Requests run in the order they came, drawings and calls alike, once Python is up.
+const queue: Array<Extract<ToWorker, { kind: 'render' | 'call' }>> = [];
 
 scope.onmessage = (event) => {
   const message = event.data;
@@ -50,6 +58,7 @@ scope.onmessage = (event) => {
       });
       break;
     case 'render':
+    case 'call':
       queue.push(message);
       drain();
       break;
@@ -87,6 +96,13 @@ async function boot(base: string): Promise<void> {
   // The first card pays for the font atlases and sprites; pay it before the first real request.
   py.runPython('render_image(from_dict({"name": "warm-up"}), scale=1)');
   draw = py.globals.get('draw') as typeof draw; // the function DRAW has just defined
+  python = (fn, arg) => {
+    const result = (py.globals.get(fn) as (value: string) => unknown)(arg); // also defined by DRAW
+    if (typeof result !== 'string') {
+      throw new Error(`${fn} did not return text`);
+    }
+    return result;
+  };
   scope.postMessage({ kind: 'state', state: { kind: 'ready' } });
   drain();
 }
@@ -98,6 +114,16 @@ function drain(): void {
       return;
     }
     try {
+      if (request.kind === 'call') {
+        if (python) {
+          scope.postMessage({
+            kind: 'result',
+            id: request.id,
+            value: python(request.fn, request.arg),
+          });
+        }
+        continue;
+      }
       const result = draw(
         JSON.stringify(request.item),
         JSON.stringify(request.options),

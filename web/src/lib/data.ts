@@ -16,8 +16,6 @@ export interface IndexEntry {
 export interface Preset {
   readonly file: string;
   readonly item: Item;
-  /** Every value each rolling identification can take, worst first, by stat key. */
-  readonly rolls: Readonly<Record<string, readonly number[]>>;
   /** Wynnpool's weight profiles for the item, empty for the many items it does not weigh. */
   readonly weights: readonly Weight[];
 }
@@ -70,10 +68,13 @@ export async function loadPreset(file: string): Promise<Preset> {
   if (!isRecord(data)) {
     throw new Error(`Preset ${file} is not an object`);
   }
-  const rolls: Record<string, number[]> = {};
-  for (const [key, values] of Object.entries(isRecord(data.rolls) ? data.rolls : {})) {
-    if (Array.isArray(values) && values.every((value) => typeof value === 'number')) {
-      rolls[key] = values;
+  // Each identification's value is its base; `fixed` names the ones that never roll.
+  const fixed = Array.isArray(data.fixed) ? (data.fixed as unknown[]) : [];
+  const item = toItem(data.item);
+  for (const stat of item.identifications) {
+    stat.base = stat.value;
+    if (fixed.includes(stat.stat)) {
+      stat.fixed = true;
     }
   }
   const weights = (Array.isArray(data.weights) ? (data.weights as unknown[]) : []).flatMap(
@@ -90,7 +91,7 @@ export async function loadPreset(file: string): Promise<Preset> {
       return [{ name: profile.name, stats }];
     }
   );
-  return { file, item: toItem(data.item), rolls, weights };
+  return { file, item, weights };
 }
 
 export async function loadStats(): Promise<StatInfo[]> {

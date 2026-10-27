@@ -1,20 +1,45 @@
 <script lang="ts">
   import type { IndexEntry } from '../lib/data.ts';
   import { TIER_COLOURS } from '../lib/colours.ts';
+  import { WYNNTILS_CODE } from '../lib/wynntils.ts';
 
   interface Props {
     index: readonly IndexEntry[];
     current: string | undefined;
     onpick: (file: string) => Promise<void>;
     onblank: () => void;
+    /** Loads an item code pasted from Wynncraft chat and says what came of it. */
+    onwynntils: (text: string) => Promise<string>;
   }
 
-  let { index, current, onpick, onblank }: Props = $props();
+  let { index, current, onpick, onblank, onwynntils }: Props = $props();
 
   const LIMIT = 12;
   let query = $state('');
-  let failure = $state('');
   let open = $state(false);
+  let message = $state<{ text: string; error: boolean; attempt: number }>({
+    text: '',
+    error: false,
+    attempt: 0,
+  });
+
+  function say(text: string, error = false): void {
+    message = { text, error, attempt: message.attempt + 1 };
+  }
+
+  /** A pasted Wynntils code is an item, not a search. */
+  async function loadCode(text: string): Promise<void> {
+    query = '';
+    open = false;
+    try {
+      say(await onwynntils(text));
+    } catch (error) {
+      say(
+        `That Wynntils item did not load: ${error instanceof Error ? error.message : String(error)}`,
+        true
+      );
+    }
+  }
 
   const matches = $derived.by(() => {
     const needle = query.trim().toLowerCase();
@@ -41,10 +66,13 @@
     try {
       await onpick(entry.file);
       query = '';
-      failure = '';
       open = false;
+      message = { text: '', error: false, attempt: message.attempt };
     } catch (error) {
-      failure = `${entry.name} did not load: ${error instanceof Error ? error.message : String(error)}`;
+      say(
+        `${entry.name} did not load: ${error instanceof Error ? error.message : String(error)}`,
+        true
+      );
     }
   }
 </script>
@@ -72,14 +100,18 @@
         type="search"
         bind:value={query}
         oninput={() => {
-          open = true;
+          if (WYNNTILS_CODE.test(query)) {
+            void loadCode(query); // loadCode reports its own failure
+          } else {
+            open = true;
+          }
         }}
         onkeydown={(event) => {
           if (event.key === 'Escape') {
             open = false;
           }
         }}
-        placeholder="Spring, Warp, Nirvana…"
+        placeholder="Spring, Warp, or an item pasted from Wynntils"
         autocomplete="off"
         spellcheck="false"
       />
@@ -110,13 +142,23 @@
   {:else}
     <p class="muted small">
       {#if currentEntry}
-        Editing <strong>{currentEntry.name}</strong>. Its rolls stay within what the game can roll.
+        Template: <strong>{currentEntry.name}</strong>. Every field and stat can be changed.
       {:else}
         Custom item: every field is yours to set.
       {/if}
     </p>
   {/if}
-  <p class="status status--error" role="alert">{failure}</p>
+  {#key message.attempt}
+    <p
+      class="status"
+      class:status--error={message.error}
+      class:status--success={!message.error}
+      class:flash={message.attempt > 0}
+      role={message.error ? 'alert' : 'status'}
+    >
+      {message.text}
+    </p>
+  {/key}
 </div>
 
 <style>

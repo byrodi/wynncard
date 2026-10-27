@@ -41,6 +41,10 @@ export interface Identification {
   name?: string;
   unit?: string;
   inverted?: boolean;
+  /** Editor only: the base the values it rolls come from, as the item API's `raw`. */
+  base?: number;
+  /** Editor only: the stat never rolls, its value is its base. */
+  fixed?: boolean;
 }
 
 export type Requirements = { level: number; class_name: string; quest: string } & Record<
@@ -167,7 +171,18 @@ function toIdentification(value: unknown): Identification | undefined {
   if (typeof value.inverted === 'boolean') {
     out.inverted = value.inverted;
   }
+  // Older share links have no base: the value stands in for it.
+  out.base = integer(value.base) ?? Math.round(out.value);
+  if (value.fixed === true) {
+    out.fixed = true;
+  }
   return out;
+}
+
+/** The identification as wynncard.spec takes it: the editor's base and fixed flag left out. */
+export function specOf(stat: Identification): Identification {
+  const { base: _base, fixed: _fixed, ...spec } = stat;
+  return spec;
 }
 
 /** The item without the keys that still hold their default, for short share links. */

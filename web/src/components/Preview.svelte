@@ -10,9 +10,11 @@
     options: RenderOptions;
     name: string;
     share: () => Promise<string>;
+    /** The item as a Wynntils chat code, and what to tell the person once it is copied. */
+    itemCode: () => { code: Promise<string>; note: string };
   }
 
-  let { engine, status, item, options = $bindable(), name, share }: Props = $props();
+  let { engine, status, item, options = $bindable(), name, share, itemCode }: Props = $props();
 
   const SCALES = [1, 2, 3, 4, 5, 6];
   // At most two CSS pixels per Minecraft pixel; less when the card would not fit the stage.
@@ -136,6 +138,26 @@
     }
   }
 
+  async function copyItem(): Promise<void> {
+    const { code, note } = itemCode();
+    try {
+      // The promise goes into ClipboardItem as it is, so the copy still counts as the click's action.
+      const text = code.then((value) => new Blob([value], { type: 'text/plain' }));
+      await navigator.clipboard.write([new ClipboardItem({ 'text/plain': text })]);
+      say(note);
+    } catch (error) {
+      // A refused encoding explains itself better than the clipboard error it caused.
+      const failure: unknown = await code.then(
+        () => error,
+        (reason: unknown) => reason
+      );
+      say(
+        `Could not copy the item: ${failure instanceof Error ? failure.message : String(failure)}`,
+        true
+      );
+    }
+  }
+
   async function copyLink(): Promise<void> {
     try {
       await navigator.clipboard.writeText(await share());
@@ -209,6 +231,7 @@
       Download PNG
     </button>
     <button class="button" type="button" onclick={copyImage} disabled={!size}>Copy image</button>
+    <button class="button" type="button" onclick={copyItem}>Copy item</button>
     <button class="button" type="button" onclick={copyLink}>Copy link</button>
   </div>
   {#key message.attempt}

@@ -1,7 +1,43 @@
-// Rolls of a preset's identifications. The values each one can roll come from the site data, worked
-// out by wynncard.rolls in Python and checked there against the item API; only the percentage left.
+// Rolls of an identification, the TypeScript twin of wynncard.rolls: the slider needs the values a base
+// can roll on every keystroke, too often to ask the worker. rolls.test.ts holds both to the same cases.
 
 import type { Identification } from './item.ts';
+
+/**
+ * Every value an identification with this base can roll, as printed, from the worst roll to the best:
+ * the base times 30 to 130 percent (70 to 130 for a negative base), rounded like Wynntils and never 0.
+ * Spell costs (`inverted`) are worked out on the negated base. A base of 0 only rolls 0.
+ */
+export function possibleValues(base: number, inverted: boolean): number[] {
+  if (base === 0) {
+    return [0];
+  }
+  const stored = inverted ? -base : base;
+  const found = new Set<number>();
+  for (let roll = stored > 0 ? 30 : 70; roll <= 130; roll++) {
+    found.add(scaled(stored, roll, inverted));
+  }
+  return [...found].sort((a, b) => a - b).map((value) => (inverted ? -value : value));
+}
+
+/** The value an internal roll gives, as Wynntils' calculateStatValue. */
+export function valueAtRoll(base: number, internalRoll: number, inverted: boolean): number {
+  const value = scaled(inverted ? -base : base, internalRoll, inverted);
+  return inverted ? -value : value;
+}
+
+/**
+ * `stored * roll / 100` rounded like Wynntils: halves away from zero for a positive base and towards
+ * it for a negative one, the other way round for spell costs. Integer arithmetic keeps the halves exact.
+ */
+function scaled(stored: number, roll: number, inverted: boolean): number {
+  const product = stored * roll;
+  const whole = Math.trunc(product / 100);
+  const rest = Math.abs(product - whole * 100);
+  const halfAway = stored > 0 !== inverted;
+  const value = rest > 50 || (rest === 50 && halfAway) ? whole + Math.sign(product) : whole;
+  return value || (stored > 0 ? 1 : -1);
+}
 
 /**
  * Roll percentage of `value` among `values`, every value an identification can roll from worst to
@@ -18,7 +54,7 @@ export function rollPercentage(values: readonly number[], value: number): number
 }
 
 /** The possible value whose roll percentage is closest to `percent`. */
-export function valueAt(values: readonly number[], percent: number): number {
+export function valueNearest(values: readonly number[], percent: number): number {
   const worst = values[0] ?? 0;
   const target = worst + ((values.at(-1) ?? worst) - worst) * (percent / 100);
   let closest = worst;
