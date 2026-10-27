@@ -21,10 +21,14 @@ BASELINE = 8  # glyph ascent inside a line
 
 @functools.cache
 def _sprite(name: str) -> tuple[Image.Image, dict]:
-    """A tooltip frame or background sprite with the border widths from its `.mcmeta`."""
+    """A tooltip frame or background sprite with the border widths from its `.mcmeta`.
+
+    Shiny sprites are animations with their frames stacked in one strip; the card shows the first frame.
+    """
     base = mcfont.ASSETS / "textures" / "gui" / "sprites" / "tooltip" / f"{name}.png"
-    meta = json.loads(base.with_suffix(".png.mcmeta").read_text())
-    return Image.open(base).convert("RGBA"), meta["gui"]["scaling"]["border"]
+    scaling = json.loads(base.with_suffix(".png.mcmeta").read_text())["gui"]["scaling"]
+    image = Image.open(base).convert("RGBA")
+    return image.crop((0, 0, image.width, scaling["height"])), scaling["border"]
 
 
 def _nine_slice(name: str, width: int, height: int) -> Image.Image:
