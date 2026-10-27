@@ -11,18 +11,15 @@ so it looks like a screenshot of the real item.
 
 ## Web editor
 
-[byrodi.github.io/wynncard](https://byrodi.github.io/wynncard/) makes cards in the browser, nothing to install.
-Pick any of the more than 5,000 gear items from the Wynncraft item database and move its rolls; each slider stops
-only on values the game can actually roll, and the percentages match the ones Wynntils prints. Or start from
-scratch and set every field yourself: tier, type, emblem, elements, damage, requirements, identifications, major
-ids, shiny tracker, rerolls and Wynnpool scales. For the items Wynnpool weighs, the scales can follow the rolls:
-each one is the weighted mean of the roll percentages under Wynnpool's weights, a negative weight counting the
-roll from the other end. Roll percentages, the frame and the Wynnpool section can each be switched off. The card downloads as a PNG, copies to the clipboard, or travels as a link that opens the same
-card with the same settings.
+[byrodi.github.io/wynncard](https://byrodi.github.io/wynncard/) makes cards in the browser, with nothing to install.
 
-The editor runs this library itself through [Pyodide](https://pyodide.org), so a card from the site and a card
-from Python are the same pixels. The first visit downloads about 7 MB for Python and Pillow; after that the
-browser has them cached.
+1. Pick any gear item, or start from scratch.
+2. Move the rolls; sliders stop only on values the game can roll.
+3. Switch roll percentages, the frame and Wynnpool scales on or off.
+4. Download a PNG, copy the image, or share a link.
+
+The editor runs this library through [Pyodide](https://pyodide.org), so its cards are the same pixels as Python's.
+The first visit downloads about 7 MB.
 
 ## Features
 
