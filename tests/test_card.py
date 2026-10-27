@@ -1,6 +1,7 @@
 import unittest
 
 from wynncard import Identification, Item, Requirements, Scale, from_market, from_wynnpool, render, render_image
+from wynncard.render import _sprite
 from wynncard.tooltip import build, scale_color
 
 
@@ -120,6 +121,12 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(render_image(item, scale=1, frame=False).getpixel((0, 0)), (0, 0, 0, 0))
         with self.assertRaises(ValueError):
             render_image(item, scale=0)
+
+    def test_shiny_sprites_use_their_first_animation_frame(self):
+        """The shiny sprites stack their frames in one strip; stretching the whole strip striped the card."""
+        for name in ("mythic_shiny_frame", "mythic_shiny_background", "normal_shiny_frame", "mythic_frame"):
+            image, _ = _sprite(name)
+            self.assertEqual(image.width, image.height, name)
 
 
 if __name__ == "__main__":
