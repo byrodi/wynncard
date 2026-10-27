@@ -4,10 +4,21 @@
   interface Props {
     item: Item;
     autoOverall: boolean;
+    scaleMode: 'off' | 'weights' | 'manual';
     overall: number | null;
+    /** Scores from Wynnpool's weights and the current rolls. */
+    weighted: ReadonlyArray<{ profile: string; score: number }>;
+    hasWeights: boolean;
   }
 
-  let { item = $bindable(), autoOverall = $bindable(), overall }: Props = $props();
+  let {
+    item = $bindable(),
+    autoOverall = $bindable(),
+    scaleMode = $bindable(),
+    overall,
+    weighted,
+    hasWeights,
+  }: Props = $props();
 
   const TRACKERS = [
     'Mobs Killed',
@@ -22,8 +33,11 @@
     item.shiny = on ? { name: 'Mobs Killed', value: 1000 } : null;
   }
 
-  function toggleScales(on: boolean): void {
-    item.scales = on ? [{ profile: 'Main', score: 90 }] : [];
+  function setMode(mode: Props['scaleMode']): void {
+    scaleMode = mode;
+    if (mode === 'manual' && !item.scales.length) {
+      item.scales = [{ profile: 'Main', score: 90 }];
+    }
   }
 </script>
 
@@ -88,17 +102,57 @@
   </div>
 
   <div class="block">
-    <label class="check">
-      <input
-        type="checkbox"
-        checked={item.scales.length > 0}
-        onchange={(event) => {
-          toggleScales(event.currentTarget.checked);
-        }}
-      />
-      Wynnpool weight scales
-    </label>
-    {#if item.scales.length}
+    <fieldset class="segments">
+      <legend class="label">Wynnpool weight scales</legend>
+      <label class="segment">
+        <input
+          type="radio"
+          name="scales"
+          checked={scaleMode === 'off'}
+          onchange={() => {
+            setMode('off');
+          }}
+        /> Off
+      </label>
+      <label class="segment" class:segment--unavailable={!hasWeights}>
+        <input
+          type="radio"
+          name="scales"
+          checked={scaleMode === 'weights'}
+          disabled={!hasWeights}
+          onchange={() => {
+            setMode('weights');
+          }}
+        /> From Wynnpool
+      </label>
+      <label class="segment">
+        <input
+          type="radio"
+          name="scales"
+          checked={scaleMode === 'manual'}
+          onchange={() => {
+            setMode('manual');
+          }}
+        /> By hand
+      </label>
+    </fieldset>
+    {#if !hasWeights}
+      <p class="muted note">
+        Wynnpool has no weights for this item; scales can still be typed by hand.
+      </p>
+    {/if}
+    {#if scaleMode === 'weights'}
+      <ul class="scales scored">
+        {#each weighted as scale (scale.profile)}
+          <li>
+            <span>{scale.profile} Scale</span><span class="score">{scale.score.toFixed(1)}%</span>
+          </li>
+        {:else}
+          <li class="muted">None of the weighted stats have a roll yet.</li>
+        {/each}
+      </ul>
+    {/if}
+    {#if scaleMode === 'manual'}
       <ul class="scales">
         {#each item.scales as scale, index (index)}
           <li class="grid scale">
@@ -175,5 +229,30 @@
 
   .add-scale {
     justify-self: start;
+  }
+
+  .note {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  /* Exists, but not for this item: the family's hatch instead of a faded control. */
+  .segment--unavailable {
+    color: var(--fd-muted);
+    background-color: var(--fd-bg-app);
+    background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--fd-line) 6px 8px);
+    cursor: not-allowed;
+  }
+
+  .scored li {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 2px;
+    border-bottom: 1px solid var(--fd-line-app);
+    font-size: 14px;
+  }
+
+  .score {
+    font-variant-numeric: tabular-nums;
   }
 </style>

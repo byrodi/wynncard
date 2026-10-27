@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as PNG, or a batch of up to 100 items as a JSON array of base64 PNGs.
 - Web editor on GitHub Pages: presets for every gear item with roll sliders, items built from scratch,
   PNG export, copy to clipboard and share links. It runs the library in the browser through Pyodide.
+  Wynnpool scales can be scored from Wynnpool's weights, typed by hand, or left out.
 - `from_dict` and `to_dict`: an `Item` as a JSON-ready dict with defaults left out.
 - `rolls.values` and `rolls.percentage`: every value an identification can roll and its roll
   percentage, as Wynntils works them out.

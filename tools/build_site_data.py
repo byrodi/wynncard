@@ -1,6 +1,6 @@
 """Everything the web editor loads besides its own code, written under one output directory.
 
-    python tools/build_site_data.py web/public [--source items.json]
+    python tools/build_site_data.py web/public [--source items.json] [--weights weights.json]
 
 - `py/wynncard.zip`: the library with its assets, unpacked into Pyodide's site-packages in the browser.
 - `data/stats.json`: the identification table for the stat picker, in tooltip order.
@@ -10,10 +10,14 @@
   internal name as a sixth field.
 - `data/items/<file>.json`: one preset per item, `{"item": <spec dict of the base item>,
   "rolls": {stat key: [every value it can roll, worst first]}}`; fixed identifications have no rolls.
+  An item Wynnpool weighs also gets `"weights": [{"name": "Main", "stats": {stat key: weight}}]`.
 
 The item database comes from the API unless `--source` names a saved copy. Each item is checked on the
 way: it has to render, and its roll range has to match the API's min and max, so a change on
 Wynncraft's side fails the build instead of shipping wrong presets.
+
+The Wynnpool weights come from Wynnpool's API unless `--weights` names a saved copy. They are a third
+party's extra: when the request fails the build warns and goes on without them.
 """
 import argparse
 import json
@@ -29,6 +33,7 @@ sys.path.insert(0, str(ROOT))
 from wynncard import from_wynnpool, render_image, rolls, stats, to_dict  # noqa: E402
 
 API = "https://api.wynncraft.com/v3/item/database?fullResult"
+WEIGHTS_API = "https://api.wynnpool.com/item/weight/all"
 GEAR = ("weapon", "armour", "accessory")
 
 
@@ -47,13 +52,27 @@ def stat_table(out: Path) -> None:
     _write(out / "data" / "stats.json", rows)
 
 
-def items(out: Path, source: str | None) -> int:
-    if source:
-        database = json.loads(Path(source).read_text())
-    else:
-        request = urllib.request.Request(API, headers={"User-Agent": "wynncard-site-data"})
-        with urllib.request.urlopen(request, timeout=120) as response:
-            database = json.load(response)
+def weights(source: str | None) -> dict[str, list[dict]]:
+    """Wynnpool's weight profiles by internal item name, with stats renamed to Wynntils keys."""
+    try:
+        profiles = json.loads(Path(source).read_text()) if source else _get(WEIGHTS_API)
+    except (OSError, ValueError) as e:
+        print(f"warning: no Wynnpool weights, the presets go without them: {e}", file=sys.stderr)
+        return {}
+    out: dict[str, list[dict]] = {}
+    for profile in profiles:
+        weighted = {}
+        for api, weight in (profile.get("identifications") or {}).items():
+            stat = stats.lookup(api)
+            if stat is not None:
+                weighted[stat.key] = weight
+        out.setdefault(profile.get("item_id"), []).append({"name": profile.get("weight_name") or "Scale",
+                                                            "stats": weighted})
+    return out
+
+
+def items(out: Path, source: str | None, weighed: dict[str, list[dict]] | None = None) -> int:
+    database = json.loads(Path(source).read_text()) if source else _get(API)
     gear = sorted((info for info in database if info.get("type") in GEAR), key=lambda info: _name(info).lower())
     index, files, problems = [], set(), []
     for info in gear:
@@ -66,6 +85,8 @@ def items(out: Path, source: str | None) -> int:
             problems.append(f"{name}: {type(e).__name__}: {e}")
             continue
         internal = info.get("internalName") or name
+        if (weighed or {}).get(internal):
+            preset["weights"] = weighed[internal]
         file = _slug(internal)
         while file in files:
             file += "_"
@@ -97,6 +118,12 @@ def _rolls(info: dict) -> dict[str, list[int]]:
     return out
 
 
+def _get(url: str):
+    request = urllib.request.Request(url, headers={"User-Agent": "wynncard-site-data"})
+    with urllib.request.urlopen(request, timeout=120) as response:
+        return json.load(response)
+
+
 def _name(info: dict) -> str:
     return info.get("displayName") or info.get("internalName") or "?"
 
@@ -114,10 +141,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("out", type=Path, help="directory the site serves as its root, e.g. web/public")
     parser.add_argument("--source", help="a saved copy of the item database instead of the API")
+    parser.add_argument("--weights", help="a saved copy of the Wynnpool weights instead of their API")
     args = parser.parse_args()
     package(args.out)
     stat_table(args.out)
-    sys.exit(1 if items(args.out, args.source) else 0)
+    sys.exit(1 if items(args.out, args.source, weights(args.weights)) else 0)
 
 
 if __name__ == "__main__":
