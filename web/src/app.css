@@ -235,6 +235,10 @@ input[type='range'] {
   color: var(--fd-error);
 }
 
+.status--success {
+  color: var(--fd-success);
+}
+
 @keyframes fd-flash {
   from {
     background: var(--fd-rose-soft);
@@ -246,6 +250,19 @@ input[type='range'] {
 
 .flash {
   animation: fd-flash 600ms ease-out;
+}
+
+@keyframes fd-flash-success {
+  from {
+    background: color-mix(in srgb, var(--fd-success) 12%, transparent);
+  }
+  to {
+    background: transparent;
+  }
+}
+
+.status--success.flash {
+  animation-name: fd-flash-success;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -215,6 +215,7 @@
     <p
       class="status"
       class:status--error={message.error}
+      class:status--success={!message.error}
       class:flash={message.attempt > 0}
       role={message.error ? 'alert' : 'status'}
     >
