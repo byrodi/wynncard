@@ -6,14 +6,23 @@
   import PresetSearch from './components/PresetSearch.svelte';
   import Preview from './components/Preview.svelte';
   import StatFields from './components/StatFields.svelte';
-  import { loadIndex, loadPreset, loadStats, type IndexEntry, type StatInfo } from './lib/data.ts';
+  import {
+    loadIndex,
+    loadPreset,
+    loadStats,
+    type IndexEntry,
+    type StatInfo,
+    type Weight,
+  } from './lib/data.ts';
   import { compact, emptyItem, isRecord, toItem, type Item } from './lib/item.ts';
   import { Renderer, type RenderOptions, type RendererState } from './lib/renderer.ts';
-  import { overallRoll, rollPercentage, valueAt } from './lib/rolls.ts';
+  import { overallRoll, rollPercentage, valueAt, weightedScore } from './lib/rolls.ts';
   import { decodeShare, encodeShare } from './lib/share.ts';
 
   const START = 'spring';
   const START_ROLL = 80;
+  const SCALE_MODES = ['off', 'weights', 'manual'] as const;
+  type ScaleMode = (typeof SCALE_MODES)[number];
 
   let item = $state<Item>(emptyItem());
   let rolls = $state<Record<string, readonly number[]>>({});
@@ -22,6 +31,9 @@
   let fixed = $state<string[]>([]);
   let options = $state<RenderOptions>({ scale: 4, color_lerp: false, rolls: true, frame: true });
   let autoOverall = $state(true);
+  // Wynnpool scales: none, scored from Wynnpool's weights and the current rolls, or typed by hand.
+  let weights = $state<readonly Weight[]>([]);
+  let scaleMode = $state<ScaleMode>('off');
   let index = $state<IndexEntry[]>([]);
   let stats = $state<StatInfo[]>([]);
   let dataError = $state('');
@@ -33,10 +45,20 @@
     renderer = state;
   });
 
-  // What the worker draws: the editor's item with stray input dropped and the overall worked out.
+  const weighted = $derived(
+    weights.flatMap((weight) => {
+      const score = weightedScore(weight.stats, item.identifications);
+      return score === undefined ? [] : [{ profile: weight.name, score }];
+    })
+  );
+
+  // What the worker draws: the editor's item with stray input dropped, the overall and scales worked out.
   const drawn = $derived.by(() => {
     const clean = toItem($state.snapshot(item));
     clean.overall_roll = autoOverall ? overallRoll(clean.identifications) : clean.overall_roll;
+    if (scaleMode !== 'manual') {
+      clean.scales = scaleMode === 'weights' ? weighted : [];
+    }
     return compact(clean);
   });
 
@@ -69,8 +91,12 @@
     item = loaded.item;
     rolls = loaded.rolls;
     fixed = fixedStats(loaded.item, loaded.rolls);
+    weights = loaded.weights;
     preset = file;
     autoOverall = true;
+    if (scaleMode === 'weights' && !weights.length) {
+      scaleMode = 'off';
+    }
     setAllRolls(START_ROLL);
   }
 
@@ -80,8 +106,12 @@
     item.type = 'spear';
     rolls = {};
     fixed = [];
+    weights = [];
     preset = undefined;
     autoOverall = true;
+    if (scaleMode === 'weights') {
+      scaleMode = 'off';
+    }
   }
 
   function fixedStats(base: Item, ranges: Readonly<Record<string, readonly number[]>>): string[] {
@@ -113,10 +143,13 @@
       const loaded = await loadPreset(shared.preset);
       rolls = loaded.rolls;
       fixed = fixedStats(loaded.item, loaded.rolls);
+      weights = loaded.weights;
       preset = shared.preset;
     }
     item = toItem(shared.item);
     autoOverall = shared.auto !== false;
+    const mode = SCALE_MODES.find((m) => m === shared.scales);
+    scaleMode = mode ?? (item.scales.length ? 'manual' : 'off');
     const saved = isRecord(shared.options) ? shared.options : {};
     if (typeof saved.scale === 'number' && [1, 2, 3, 4, 5, 6].includes(saved.scale)) {
       options.scale = saved.scale;
@@ -134,6 +167,7 @@
       options: $state.snapshot(options),
       preset,
       auto: autoOverall,
+      scales: scaleMode,
     });
     history.replaceState(null, '', hash);
     return location.href;
@@ -178,7 +212,14 @@
       onrandom={randomRolls}
       overall={drawn.overall_roll ?? null}
     />
-    <ExtraFields bind:item bind:autoOverall overall={drawn.overall_roll ?? null} />
+    <ExtraFields
+      bind:item
+      bind:autoOverall
+      bind:scaleMode
+      overall={drawn.overall_roll ?? null}
+      {weighted}
+      hasWeights={weights.length > 0}
+    />
     <BaseFields bind:item />
   </section>
 </main>

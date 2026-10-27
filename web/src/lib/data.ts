@@ -18,6 +18,14 @@ export interface Preset {
   readonly item: Item;
   /** Every value each rolling identification can take, worst first, by stat key. */
   readonly rolls: Readonly<Record<string, readonly number[]>>;
+  /** Wynnpool's weight profiles for the item, empty for the many items it does not weigh. */
+  readonly weights: readonly Weight[];
+}
+
+export interface Weight {
+  readonly name: string;
+  /** Weight by stat key; the absolute weights of a profile add up to 1. */
+  readonly stats: Readonly<Record<string, number>>;
 }
 
 export interface StatInfo {
@@ -68,7 +76,21 @@ export async function loadPreset(file: string): Promise<Preset> {
       rolls[key] = values;
     }
   }
-  return { file, item: toItem(data.item), rolls };
+  const weights = (Array.isArray(data.weights) ? (data.weights as unknown[]) : []).flatMap(
+    (profile) => {
+      if (!isRecord(profile) || typeof profile.name !== 'string' || !isRecord(profile.stats)) {
+        return [];
+      }
+      const stats: Record<string, number> = {};
+      for (const [key, weight] of Object.entries(profile.stats)) {
+        if (typeof weight === 'number') {
+          stats[key] = weight;
+        }
+      }
+      return [{ name: profile.name, stats }];
+    }
+  );
+  return { file, item: toItem(data.item), rolls, weights };
 }
 
 export async function loadStats(): Promise<StatInfo[]> {

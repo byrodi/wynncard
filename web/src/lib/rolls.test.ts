@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { overallRoll, rollPercentage, valueAt } from './rolls.ts';
+import { overallRoll, rollPercentage, valueAt, weightedScore } from './rolls.ts';
 
 // Values as tools/build_site_data.py writes them, worst first.
 const MANA_REGEN = Array.from({ length: 21 }, (_, i) => 6 + i); // raw 20: 6 to 26
@@ -19,6 +19,19 @@ test('valueAt picks the closest value the item can roll', () => {
   assert.equal(valueAt(MANA_REGEN, 52), 16);
   assert.equal(valueAt(SPELL_COST, 0), -1);
   assert.equal(valueAt(SPELL_COST, 70), -3);
+});
+
+test('a weight profile is a weighted mean, negative weights from the other end', () => {
+  const stats = [
+    { stat: 'MISC_MANA_REGEN', value: 20, roll: 90 },
+    { stat: 'MISC_HEALTH', value: 900, roll: 20 },
+    { stat: 'SKILL_AGILITY', value: 5 },
+  ];
+  // (90 * 0.6 + (100 - 20) * 0.4) / 1.0
+  assert.equal(weightedScore({ MISC_MANA_REGEN: 0.6, MISC_HEALTH: -0.4 }, stats), 86);
+  // Stats the item lacks leave the mean over the ones it has.
+  assert.equal(weightedScore({ MISC_MANA_REGEN: 0.5, MISC_WALK_SPEED: 0.5 }, stats), 90);
+  assert.equal(weightedScore({ SKILL_AGILITY: 1 }, stats), undefined);
 });
 
 test('overall is the mean of the rolled identifications', () => {
