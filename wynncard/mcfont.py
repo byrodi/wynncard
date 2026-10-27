@@ -123,14 +123,19 @@ def draw(canvas: Image.Image, x: int, baseline: int, text: str, font_id: str,
         if found.image is not None:
             sprite = found.sized(zoom)
             if tint[:3] != (255, 255, 255) and not found.colored:
-                sprite = _tinted(sprite, tint)
+                sprite = _tinted(found, zoom, tint)
             canvas.alpha_composite(sprite, (x * zoom, (baseline - found.ascent) * zoom))
         x += found.advance
     return x
 
 
-def _tinted(sprite: Image.Image, tint: tuple) -> Image.Image:
-    """Multiply a grey glyph by the text colour, the way the game colours its font."""
-    red, green, blue, alpha = sprite.split()
+@functools.lru_cache(maxsize=4096)
+def _tinted(glyph: Glyph, zoom: int, tint: tuple) -> Image.Image:
+    """Multiply a grey glyph by the text colour, the way the game colours its font.
+
+    Cached: tinting is most of the drawing time, and a card repeats a handful of colours over many glyphs.
+    The bound keeps a long-running server with lerped roll colours from growing without end.
+    """
+    red, green, blue, alpha = glyph.sized(zoom).split()
     scale = lambda band, value: band.point(lambda pixel: pixel * value // 255)  # noqa: E731
     return Image.merge("RGBA", (scale(red, tint[0]), scale(green, tint[1]), scale(blue, tint[2]), alpha))

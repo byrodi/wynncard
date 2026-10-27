@@ -1,3 +1,4 @@
+import hashlib
 import unittest
 
 from wynncard import Identification, Item, Requirements, Scale, from_market, from_wynnpool, render, render_image
@@ -121,6 +122,17 @@ class RenderTest(unittest.TestCase):
         self.assertEqual(render_image(item, scale=1, frame=False).getpixel((0, 0)), (0, 0, 0, 0))
         with self.assertRaises(ValueError):
             render_image(item, scale=0)
+
+    def test_pixels_stay_the_same(self):
+        """Reference hashes of the raw pixels: a speed-up or a refactor must not move a single pixel.
+
+        Update them only for a change that is meant to alter the card, after looking at the new one.
+        """
+        item = from_market(LISTING, INFO, [{"profile": "Main", "score": 94.6}])
+        for options, expected in (
+                ({"scale": 2}, "db00a7a3f7e631295fabd8b4e911c1acfe3e56cba6fec1792278574031cf984f"),
+                ({"scale": 3, "color_lerp": True}, "1b23edf29c2de1c1230f023ddc72ffed783673155efa9b7e50584e6d90e8f8a9")):
+            self.assertEqual(hashlib.sha256(render_image(item, **options).tobytes()).hexdigest(), expected, options)
 
     def test_shiny_sprites_use_their_first_animation_frame(self):
         """The shiny sprites stack their frames in one strip; stretching the whole strip striped the card."""
