@@ -4,6 +4,7 @@
 
 - `py/wynncard.zip`: the library with its assets, unpacked into Pyodide's site-packages in the browser.
 - `data/stats.json`: the identification table for the stat picker, in tooltip order.
+- `og.png`: the link preview, a perfectly rolled Spring on the site's background.
 - `data/index.json`: every gear item of the Wynncraft v3 item database as
   `[name, tier, type, level, file]`, sorted by name, for the preset search. Some items share a name,
   like Aftershock and the Masterwork Aftershock that also prints as Aftershock; such a row gets the
@@ -30,11 +31,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from PIL import Image  # noqa: E402
+
 from wynncard import from_wynnpool, render_image, rolls, stats, to_dict  # noqa: E402
 
 API = "https://api.wynncraft.com/v3/item/database?fullResult"
 WEIGHTS_API = "https://api.wynnpool.com/item/weight/all"
 GEAR = ("weapon", "armour", "accessory")
+PREVIEW_ITEM, PREVIEW_SIZE, PREVIEW_BACKGROUND = "Spring", (1200, 630), "#faf8f9"
 
 
 def package(out: Path) -> None:
@@ -95,10 +99,28 @@ def items(out: Path, source: str | None, weighed: dict[str, list[dict]] | None =
         row = [name, item.tier, item.type, item.requirements.level, file]
         index.append(row + [internal] if internal != name else row)
     _write(out / "data" / "index.json", index)
+    preview(out, next((info for info in gear if info.get("internalName") == PREVIEW_ITEM), None))
     for problem in problems:
         print("problem:", problem, file=sys.stderr)
     print(f"{len(index)} presets, {len(problems)} problems")
     return len(problems)
+
+
+def preview(out: Path, info: dict | None) -> None:
+    """The link preview: the item with every roll at its best, centred on the site's background."""
+    if info is None:
+        print(f"warning: no {PREVIEW_ITEM} in the database, no link preview", file=sys.stderr)
+        return
+    item = from_wynnpool(info)
+    best = _rolls(info)
+    for stat in item.identifications:
+        if stat.key in best:
+            stat.value, stat.roll = best[stat.key][-1], 100.0
+    item.overall_roll = 100.0
+    card = render_image(item, scale=2)
+    canvas = Image.new("RGBA", PREVIEW_SIZE, PREVIEW_BACKGROUND)
+    canvas.alpha_composite(card, ((canvas.width - card.width) // 2, max(0, (canvas.height - card.height) // 2)))
+    canvas.convert("RGB").save(out / "og.png", optimize=True)
 
 
 def _rolls(info: dict) -> dict[str, list[int]]:
