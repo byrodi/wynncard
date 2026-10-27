@@ -1,7 +1,7 @@
 import hashlib
 import unittest
 
-from wynncard import Identification, Item, Requirements, Scale, from_market, from_wynnpool, render, render_image
+from wynncard import Identification, Item, Requirements, Scale, Shiny, from_market, from_wynnpool, render, render_image
 from wynncard.render import _sprite
 from wynncard.tooltip import build, scale_color
 
@@ -94,6 +94,15 @@ class BuildTest(unittest.TestCase):
         self.assertEqual(0, dividers(from_market(LISTING)))
         self.assertEqual(2, dividers(from_market(LISTING, INFO)))
         self.assertEqual(3, dividers(from_market(LISTING, INFO, [{"profile": "Main", "score": 94.6}])))
+
+    def test_a_shiny_tracker_without_requirements_gets_one_divider(self):
+        """The tracker shares a section with the requirements; alone it must not bring a second divider."""
+        def dividers(item):
+            return sum(1 for line in build(item) if line.runs and line.runs[0][1] == "tooltip/divider")
+
+        shiny = Shiny("Mobs Killed", 5)
+        self.assertEqual(1, dividers(Item("x", health=10, shiny=shiny)))
+        self.assertEqual(2, dividers(Item("x", health=10, shiny=shiny, requirements=Requirements(level=5))))
 
     def test_flat_colours_snap_to_the_stop_above(self):
         self.assertEqual(scale_color(100.0), "rainbow")
