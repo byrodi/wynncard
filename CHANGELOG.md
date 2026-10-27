@@ -11,11 +11,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `wynncard-server`: an HTTP service that takes an item as JSON on `POST /card` and answers the card
   as PNG, or a batch of up to 100 items as a JSON array of base64 PNGs.
+- Web editor on GitHub Pages: presets for every gear item with roll sliders, items built from scratch,
+  PNG export, copy to clipboard and share links. It runs the library in the browser through Pyodide.
+- `from_dict` and `to_dict`: an `Item` as a JSON-ready dict with defaults left out.
+- `rolls.values` and `rolls.percentage`: every value an identification can roll and its roll
+  percentage, as Wynntils works them out.
+- `tools/build_site_data.py` builds the site's presets from the Wynncraft item database and checks
+  every roll range against the API; `tools/build_font.py` turns the game's font into a web font.
+
+### Changed
+
+- Drawing is 3 to 9 times faster: tinted glyphs are cached instead of recoloured for every character.
 
 ### Fixed
 
 - A tooltip no longer draws the divider of a section it has no data for, so a market listing
   rendered without the Wynnpool item has no empty lines above its identifications.
+- Shiny cards use the first frame of the animated shiny sprites; the whole strip was stretched over
+  the card and striped it.
+- A shiny tracker with no requirements above it gets one divider, not two.
 
 ## [0.2.0] - 2026-09-20
 
