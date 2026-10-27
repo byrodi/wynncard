@@ -3,3 +3,4 @@ dist/
 # Written by tools/build_site_data.py
 public/data/
 public/py/
+public/og.png

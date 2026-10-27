@@ -15,8 +15,9 @@ so it looks like a screenshot of the real item.
 Pick any of the more than 5,000 gear items from the Wynncraft item database and move its rolls; each slider stops
 only on values the game can actually roll, and the percentages match the ones Wynntils prints. Or start from
 scratch and set every field yourself: tier, type, emblem, elements, damage, requirements, identifications, major
-ids, shiny tracker, rerolls and Wynnpool scales. Roll percentages, the frame and the Wynnpool section can each
-be switched off. The card downloads as a PNG, copies to the clipboard, or travels as a link that opens the same
+ids, shiny tracker, rerolls and Wynnpool scales. For the items Wynnpool weighs, the scales can follow the rolls:
+each one is the weighted mean of the roll percentages under Wynnpool's weights, a negative weight counting the
+roll from the other end. Roll percentages, the frame and the Wynnpool section can each be switched off. The card downloads as a PNG, copies to the clipboard, or travels as a link that opens the same
 card with the same settings.
 
 The editor runs this library itself through [Pyodide](https://pyodide.org), so a card from the site and a card
@@ -124,12 +125,14 @@ rolls.percentage(16, 20)              # 50.0
 ## Building the site
 
 The site lives in `web/` (Svelte, TypeScript, Vite) and needs Node 22.18 or newer. Its data comes from
-`tools/build_site_data.py`: the library zipped for Pyodide, the stat table, and a preset for every gear item of the
-Wynncraft item database, each checked against the roll range the API states.
+`tools/build_site_data.py`: the library zipped for Pyodide, the stat table, the link preview, and a preset for every
+gear item of the Wynncraft item database, each checked against the roll range the API states and carrying
+Wynnpool's weights when it has any. If the Wynnpool request fails, the build warns and the presets go without
+weights.
 
 ```
 pip install -e .
-python tools/build_site_data.py web/public    # --source items.json reads a saved database instead
+python tools/build_site_data.py web/public    # --source and --weights read saved copies instead
 cd web && npm ci && npm run dev
 ```
 
