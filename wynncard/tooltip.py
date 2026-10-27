@@ -247,11 +247,13 @@ def _requirements(item: Item, tier: str) -> list[Line]:
 
 
 def _shiny(item: Item, tier: str) -> list[Line]:
+    """The shiny tracker, after the requirements and a divider of its own when there are any."""
     if item.shiny is None:
         return []
     color = TIERS[tier][1]
-    return [_divider(tier), aligned([("", COMMON_FONT, color), text(f" {item.shiny.name}", color)],
-                                    [text(f"{item.shiny.value:,}")])]
+    divider = [_divider(tier)] if item.requirements else []
+    return divider + [aligned([("", COMMON_FONT, color), text(f" {item.shiny.name}", color)],
+                              [text(f"{item.shiny.value:,}")])]
 
 
 def _reroll(item: Item, tier: str) -> list[Line]:
