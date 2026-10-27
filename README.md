@@ -9,6 +9,20 @@ Wynncraft item tooltips rendered as PNG cards with the game's own fonts and spri
 The card is the tooltip the game and the Wynntils mod draw, laid out in Minecraft pixels and scaled up,
 so it looks like a screenshot of the real item.
 
+## Web editor
+
+[byrodi.github.io/wynncard](https://byrodi.github.io/wynncard/) makes cards in the browser, nothing to install.
+Pick any of the more than 5,000 gear items from the Wynncraft item database and move its rolls; each slider stops
+only on values the game can actually roll, and the percentages match the ones Wynntils prints. Or start from
+scratch and set every field yourself: tier, type, emblem, elements, damage, requirements, identifications, major
+ids, shiny tracker, rerolls and Wynnpool scales. Roll percentages, the frame and the Wynnpool section can each
+be switched off. The card downloads as a PNG, copies to the clipboard, or travels as a link that opens the same
+card with the same settings.
+
+The editor runs this library itself through [Pyodide](https://pyodide.org), so a card from the site and a card
+from Python are the same pixels. The first visit downloads about 7 MB for Python and Pillow; after that the
+browser has them cached.
+
 ## Features
 
 - Describe any item by hand with `Item`, or load one from the Wynnpool and Wynnventory APIs.
@@ -16,6 +30,7 @@ so it looks like a screenshot of the real item.
 - Roll percentages coloured like the mod, flat or lerped, or hidden for the plain game look.
 - Rarity frames, shiny frames, emblems, element strips, requirement diamonds, major ids.
 - Output as PNG bytes or a Pillow image at any integer scale.
+- Items as plain JSON-ready dicts, and the full list of values each identification can roll.
 
 ## Requirements
 
@@ -61,6 +76,36 @@ png = render(item)
 identifications. `from_market` lays a Wynnventory Trade Market listing over it: rolls, overall
 percentage, rerolls and shiny stat. `scales` are Wynnpool weight scales, `[{"profile": "Main", "score": 94.6}]`.
 
+### As JSON
+
+`to_dict` turns an `Item` into a dict keyed by its field names, with defaults left out; `from_dict` reads one
+back and raises `ValueError` naming the first bad key. This is the format the web editor and its share links
+use.
+
+```python
+from wynncard import from_dict, render
+
+render(from_dict({"name": "Spring", "tier": "mythic", "type": "bow",
+                  "identifications": [{"stat": "manaRegen", "value": 39, "roll": 100.0}]}))
+```
+
+An identification's `stat` is an API name or a Wynntils key and brings the printed name, unit and position from
+the stat table. For a stat the table does not know, `name`, `unit` and `inverted` set them by hand.
+
+### Rolls
+
+`rolls.values(base, inverted)` lists every value an identification with that base value (the item API's `raw`)
+can roll, from the worst roll to the best, and `rolls.percentage(value, base, inverted)` gives the roll
+percentage. Both follow Wynntils: 30 to 130 percent of a positive base, 70 to 130 percent of a negative one,
+spell costs worked out on the negated base. `inverted` is the stat table's flag for spell costs.
+
+```python
+from wynncard import rolls
+
+rolls.values(-3, inverted=True)       # [-1, -2, -3, -4]: a 3rd Spell Cost of -3 rolls -1 to -4
+rolls.percentage(16, 20)              # 50.0
+```
+
 ### Render options
 
 `render(item, **options)` returns PNG bytes, `render_image` the Pillow image.
@@ -75,6 +120,22 @@ percentage, rerolls and shiny stat. `scales` are Wynnpool weight scales, `[{"pro
 
 `wynncard-server/` wraps the library in a small HTTP service for callers in other languages:
 `POST /card` with a listing or item as JSON answers `image/png`. See its [README](wynncard-server/README.md).
+
+## Building the site
+
+The site lives in `web/` (Svelte, TypeScript, Vite) and needs Node 22.18 or newer. Its data comes from
+`tools/build_site_data.py`: the library zipped for Pyodide, the stat table, and a preset for every gear item of the
+Wynncraft item database, each checked against the roll range the API states.
+
+```
+pip install -e .
+python tools/build_site_data.py web/public    # --source items.json reads a saved database instead
+cd web && npm ci && npm run dev
+```
+
+`npm run check` runs svelte-check, ESLint and Prettier, `npm test` the unit tests, `npm run build` writes `web/dist`.
+The Pages workflow does the same on every push to `main` and once a day, so new items reach the site without a
+commit. The pixel font in `web/src/assets` is made from the game's font by `tools/build_font.py`.
 
 ## Assets
 
