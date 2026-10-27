@@ -13,10 +13,10 @@ so it looks like a screenshot of the real item.
 
 [byrodi.github.io/wynncard](https://byrodi.github.io/wynncard/) makes cards in the browser, with nothing to install.
 
-1. Pick any gear item, or start from scratch.
-2. Move the rolls; sliders stop only on values the game can roll.
+1. Pick any gear item, paste one Wynntils shared in chat, or start from scratch.
+2. Change any stat and its base; sliders stop only on values the base can roll.
 3. Switch roll percentages, the frame and Wynnpool scales on or off.
-4. Download a PNG, copy the image, or share a link.
+4. Download a PNG, copy the image, copy the item for Wynncraft chat, or share a link.
 
 The editor runs this library through [Pyodide](https://pyodide.org), so its cards are the same pixels as Python's.
 The first visit downloads about 7 MB.
@@ -29,6 +29,7 @@ The first visit downloads about 7 MB.
 - Rarity frames, shiny frames, emblems, element strips, requirement diamonds, major ids.
 - Output as PNG bytes or a Pillow image at any integer scale.
 - Items as plain JSON-ready dicts, and the full list of values each identification can roll.
+- Reads and writes the item codes Wynntils shares in Wynncraft chat.
 
 ## Requirements
 
@@ -102,6 +103,20 @@ from wynncard import rolls
 
 rolls.values(-3, inverted=True)       # [-1, -2, -3, -4]: a 3rd Spell Cost of -3 rolls -1 to -4
 rolls.percentage(16, 20)              # 50.0
+```
+
+### Wynntils chat items
+
+Wynntils shares an item in chat as a run of private-use characters. `wynntils.decode` finds the code in a piece of
+text and returns the item as a dict; `wynntils.to_item` makes a card of it, with the base data of a gear item taken
+from the item API. `wynntils.encode` writes a code the mod shows as an item: a gear item by its name, anything else
+as crafted gear.
+
+```python
+from wynncard import render, wynntils
+
+item = wynntils.to_item(wynntils.decode(chat_line), info)   # info: the item from the Wynncraft API
+png = render(item)
 ```
 
 ### Render options

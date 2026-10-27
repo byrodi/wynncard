@@ -14,9 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Web editor on GitHub Pages: presets for every gear item with roll sliders, items built from scratch,
   PNG export, copy to clipboard and share links. It runs the library in the browser through Pyodide.
   Wynnpool scales can be scored from Wynnpool's weights, typed by hand, or left out.
+  Every identification has the same editor: its stat, its base and the value it rolls from that
+  base, so a preset is a starting point with everything changeable. An item code pasted from
+  Wynncraft chat opens as a card, and Copy item gives a code Wynntils shows as the item.
+- `wynntils.decode`, `wynntils.encode` and `wynntils.to_item`: the item codes Wynntils shares in chat,
+  format versions 1 to 3, gear and crafted gear.
 - `from_dict` and `to_dict`: an `Item` as a JSON-ready dict with defaults left out.
-- `rolls.values` and `rolls.percentage`: every value an identification can roll and its roll
-  percentage, as Wynntils works them out.
+- `rolls.values`, `rolls.percentage` and `rolls.value_at`: every value an identification can roll,
+  its roll percentage and the value of an internal roll, as Wynntils works them out.
 - `tools/build_site_data.py` builds the site's presets from the Wynncraft item database and checks
   every roll range against the API; `tools/build_font.py` turns the game's font into a web font.
 
