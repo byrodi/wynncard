@@ -31,6 +31,12 @@ def percentage(value: int, base: int, inverted: bool = False) -> float | None:
     return (value - worst) / (best - worst) * 100
 
 
+def value_at(base: int, internal_roll: int, inverted: bool = False) -> int:
+    """The value an internal roll gives: 30 to 130 for a positive base, 70 to 130 for a negative one."""
+    value = _scaled(-base if inverted else base, internal_roll, inverted)
+    return -value if inverted else value
+
+
 def _scaled(stored: int, roll: int, inverted: bool) -> int:
     """`stored * roll / 100` rounded like Wynntils: half away from zero for positive bases, towards zero
     for negative ones, the other way round for spell costs."""
